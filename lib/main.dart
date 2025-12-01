@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'pages/tag_lens_page.dart';
 import 'pages/gallery_page.dart';
+import 'pages/home_page.dart';
 
 
 void main() {
@@ -13,11 +14,12 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      initialRoute: "/home",
       routes: {
-        "/": (_) => const TagLensPage(),
+        "/home": (_) => const HomePage(),
+        "/taglens": (_) => const TagLensPage(),
         "/gallery": (_) => const GalleryPage(),
       },
-      initialRoute: "/",
     );
   }
 }

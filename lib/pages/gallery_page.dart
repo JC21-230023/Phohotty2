@@ -1,13 +1,11 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import '../services/local_storage.dart';
+import 'tag_lens_page.dart'; // Import TagLensPage for navigation
 
 class GalleryPage extends StatelessWidget {
-  final VoidCallback onGoToTagLens;
-
   const GalleryPage({
-    super.key,
-    required this.onGoToTagLens,
+    super.key, // onGoToTagLens is no longer needed
   });
 
   @override
@@ -18,7 +16,6 @@ class GalleryPage extends StatelessWidget {
       appBar: AppBar(title: const Text("ギャラリー")),
       body: Column(
         children: [
-          // 🔼 上部ボタン
           Padding(
             padding: const EdgeInsets.all(12),
             child: SizedBox(
@@ -26,12 +23,18 @@ class GalleryPage extends StatelessWidget {
               child: ElevatedButton.icon(
                 icon: const Icon(Icons.label),
                 label: const Text("画像にタグ付け"),
-                onPressed: onGoToTagLens,
+                // Use Navigator.push to show TagLensPage as a new screen
+                onPressed: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => const TagLensPage(),
+                    ),
+                  );
+                },
               ),
             ),
           ),
 
-          // 🔽 既存のギャラリー（中央）
           Expanded(
             child: FutureBuilder(
               future: local.loadGallery(),

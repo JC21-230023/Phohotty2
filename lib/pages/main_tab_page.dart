@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'home_page.dart';
-import 'tag_lens_page.dart';
 import 'gallery_page.dart';
+import 'map_page.dart';
+import 'sns_page.dart';
+import 'settings_page.dart';
+
 class MainTabPage extends StatefulWidget {
   const MainTabPage({super.key});
 
@@ -14,7 +17,7 @@ class MainTabPage extends StatefulWidget {
 }
 
 class _MainTabPageState extends State<MainTabPage> {
-  int _currentIndex = 1;
+  int _currentIndex = 0; // Default to Home page
 
   void switchTab(int index) {
     setState(() {
@@ -24,14 +27,13 @@ class _MainTabPageState extends State<MainTabPage> {
 
   @override
   Widget build(BuildContext context) {
+    // TagLensPage is removed from this list. Navigation will be handled by Navigator.push
     final pages = [
       const HomePage(),
-      const TagLensPage(),
-      GalleryPage(
-        onGoToTagLens: () => switchTab(1),
-      ),
-      //const MapPage(),
-      //const SnsPage(),
+      GalleryPage(), // onGoToTagLens is removed
+      const MapPage(),
+      const SnsPage(),
+      const SettingsPage(),
     ];
 
     return Scaffold(
@@ -40,11 +42,12 @@ class _MainTabPageState extends State<MainTabPage> {
         children: pages,
       ),
       bottomNavigationBar: BottomNavigationBar(
+        type: BottomNavigationBarType.fixed,
         currentIndex: _currentIndex,
         onTap: switchTab,
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-          BottomNavigationBarItem(icon: Icon(Icons.camera), label: 'TagLens'),
+          // TagLens tab is removed
           BottomNavigationBarItem(icon: Icon(Icons.photo), label: 'Gallery'),
           BottomNavigationBarItem(icon: Icon(Icons.map), label: 'Map'),
           BottomNavigationBarItem(icon: Icon(Icons.smartphone), label: 'SNS'),

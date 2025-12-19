@@ -30,7 +30,7 @@ class _MainTabPageState extends State<MainTabPage> {
     // TagLensPage is removed from this list. Navigation will be handled by Navigator.push
     final pages = [
       const HomePage(),
-      GalleryPage(), // onGoToTagLens is removed
+      GalleryPage(),
       const MapPage(),
       const SnsPage(),
       const SettingsPage(),
@@ -46,8 +46,7 @@ class _MainTabPageState extends State<MainTabPage> {
         currentIndex: _currentIndex,
         onTap: switchTab,
         items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-          // TagLens tab is removed
+          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),//タブアイコン
           BottomNavigationBarItem(icon: Icon(Icons.photo), label: 'Gallery'),
           BottomNavigationBarItem(icon: Icon(Icons.map), label: 'Map'),
           BottomNavigationBarItem(icon: Icon(Icons.smartphone), label: 'SNS'),

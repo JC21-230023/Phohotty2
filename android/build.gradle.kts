@@ -1,7 +1,18 @@
+import org.gradle.api.JavaVersion
+import org.gradle.api.tasks.compile.JavaCompile
+
 allprojects {
     repositories {
         google()
         mavenCentral()
+    }
+}
+
+// Fix sourceCompatibility is not yet finalized error for plugins
+subprojects {
+    tasks.withType(JavaCompile::class.java).configureEach {
+        sourceCompatibility = "1.8"
+        targetCompatibility = "1.8"
     }
 }
 

@@ -8,7 +8,7 @@ class HomePage extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(title: const Text("新しい画面")),
       body: const Center(
-        child: Text("flutter pub run flutter_launcher_icons:main"),
+        child: Text("GooglePhotoの画像ギャラリーを参照予定"), //GooglePhoto API未対応のため保留
       ),
     );
   }

@@ -1,0 +1,153 @@
+
+workflows:
+  ci:
+    name: CI (Test & Build)
+    max_build_duration: 60
+    instance_type: mac_mini_m1
+    environment:
+      vars:
+        FLUTTER_CHANNEL: "stable"        # stable/beta/master
+        APP_ENV: "dev"                   # dev/stg/prod
+        DART_DEFINES: "ENV=dev"
+      flutter: "3.24.0"                  # 必要なバージョンに固定
+      xcode: "15.4"
+      cocoapods: "1.14.3"
+      node: "18"
+      groups:
+        - ios_credentials                 # Codemagicの変数グループ（Secrets）
+        - android_credentials
+    triggering:
+      events:
+        - pull_request
+      branch_patterns:
+        - pattern: "develop"
+          include: true
+      cancel_previous_builds: true
+    cache:
+      cache_paths:
+        - ~/.pub-cache
+        - ~/Library/Caches/CocoaPods
+        - ~/.gradle/caches
+    scripts:
+      - name: Show versions
+        script: |
+          flutter --version
+          dart --version
+          xcodebuild -version
+      - name: Install dependencies
+        script: |
+          flutter pub get
+          cd ios && pod install --repo-update && cd ..
+      - name: Analyze & Test
+        script: |
+          flutter analyze
+          flutter test --coverage
+      - name: Build Android (Debug)
+        script: |
+          flutter build apk \
+            --debug \
+            --dart-define-from-file=env/${APP_ENV}.json \
+            --dart-define=${DART_DEFINES}
+      - name: Build iOS (Debug)
+        script: |
+          flutter build ios --no-codesign \
+            --debug \
+            --dart-define=${DART_DEFINES}
+    artifacts:
+      - build/app/outputs/**/* # Android
+      - build/ios/Debug-iphoneos/**/* # iOS debug
+      - coverage/lcov.info
+    publishing:
+      email:
+        recipients:
+          - "dev-team@example.com"
+        notify:
+          success: true
+          failure: true
+
+  release:
+    name: Release (Tag -> Store)
+    max_build_duration: 90
+    instance_type: mac_mini_m1
+    environment:
+      vars:
+        FLUTTER_CHANNEL: "stable"
+        APP_ENV: "prod"
+        DART_DEFINES: "ENV=prod"
+        IOS_SCHEME: "AppProd"
+        IOS_CONFIGURATION: "Release"
+        ANDROID_FLAVOR: "prod"
+      flutter: "3.24.0"
+      xcode: "15.4"
+      cocoapods: "1.14.3"
+      groups:
+        - ios_credentials
+        - android_credentials
+        - notifications
+    triggering:
+      events:
+        - tag
+      tag_patterns:
+        - pattern: "v*"
+          include: true
+    cache:
+      cache_paths:
+        - ~/.pub-cache
+        - ~/Library/Caches/CocoaPods
+        - ~/.gradle/caches
+    scripts:
+      - name: Prepare secrets (Android keystore)
+        script: |
+          echo $CM_KEYSTORE | base64 --decode > android/keystores/release.keystore
+      - name: Flutter deps
+        script: |
+          flutter pub get
+          cd ios && pod install --repo-update && cd ..
+      - name: Tests
+        script: |
+          flutter test
+      - name: Build Android App Bundle (Release)
+        script: |
+          flutter build appbundle \
+            --release \
+            --flavor ${ANDROID_FLAVOR} \
+            --build-name=${CM_BUILD_NAME} \
+            --build-number=${CM_BUILD_NUMBER} \
+            --dart-define=${DART_DEFINES}
+      - name: Android Code Signing (Gradle props)
+        script: |
+          cat >> android/gradle.properties <<EOF
+          MY_STORE_FILE=keystores/release.keystore
+          MY_STORE_PASSWORD=$CM_KEYSTORE_PASSWORD
+          MY_KEY_ALIAS=$CM_KEY_ALIAS
+          MY_KEY_PASSWORD=$CM_KEY_PASSWORD
+          EOF
+      - name: Build iOS IPA (Automatic signing via App Store Connect)
+        script: |
+          # 署名タイプ: automatic を想定
+          flutter build ipa \
+            --release \
+            --export-options-plist=ios/exportOptions.plist \
+            --dart-define=${DART_DEFINES}
+    artifacts:
+      - build/app/outputs/**/*.aab
+      - build/ios/ipa/*.ipa
+      - build/ios/archive/*.xcarchive
+    publishing:
+      app_store_connect:
+        auth: apiKey
+        key_id: $APP_STORE_CONNECT_KEY_IDENTIFIER
+        issuer_id: $APP_STORE_CONNECT_ISSUER_ID
+        private_key: $APP_STORE_CONNECT_PRIVATE_KEY
+        submit_to_testflight: true
+        notify_testers: true
+      google_play:
+        credentials: $GOOGLE_PLAY_SERVICE_ACCOUNT # JSON 全文
+        track: "internal"    # internal/alpha/beta/production
+      slack:
+        channel: "#ci-notify"
+        notify_on_build_start: false
+        notify:
+          success: true
+          failure: true
+        webhook_url: $SLACK_WEBHOOK_URL

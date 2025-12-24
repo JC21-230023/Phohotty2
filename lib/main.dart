@@ -1,10 +1,16 @@
 import 'package:flutter/material.dart';
-import 'pages/tag_lens_page.dart';
-import 'pages/gallery_page.dart';
-import 'pages/home_page.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:photo_manager/photo_manager.dart';
+import 'pages/main_tab_page.dart';
 
-
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await dotenv.load(fileName: '.env');
+  
+  // Request storage permission at startup
+  final PermissionState ps = await PhotoManager.requestPermissionExtend();
+  debugPrint('Permission status: $ps');
+  
   runApp(const MyApp());
 }
 
@@ -13,13 +19,9 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      initialRoute: "/taglens",
-      routes: {
-        "/home": (_) => const HomePage(),
-        "/taglens": (_) => const TagLensPage(),
-        "/gallery": (_) => const GalleryPage(),
-      },
+    return const MaterialApp(
+      home: MainTabPage(),
+      debugShowCheckedModeBanner: false,
     );
   }
 }

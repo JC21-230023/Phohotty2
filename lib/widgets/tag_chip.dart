@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 class TagChip extends StatelessWidget {
   final String label;
   final bool selected;
+  final bool custom;
   final VoidCallback onTap;
 
   const TagChip({
@@ -10,11 +11,12 @@ class TagChip extends StatelessWidget {
     required this.label,
     required this.onTap,
     required this.selected,
+    this.custom = false,
   });
 
   @override
   Widget build(BuildContext context) {
-    final isCustom = !_isAlphabetOnly(label);
+    final isCustom = custom || !_isAlphabetOnly(label);
 
     return GestureDetector(
       onTap: onTap,

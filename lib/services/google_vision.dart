@@ -8,18 +8,22 @@ class GoogleVisionService {
   GoogleVisionService({required this.apiKey});
 
   Future<List<String>> analyzeLabels(Uint8List bytes) async {
+    if (apiKey.isEmpty) {
+      throw Exception('Google Vision API key is empty. Provide a valid key.');
+    }
+
     final base64Image = base64Encode(bytes);
 
     final url = Uri.parse(
-      "https://vision.googleapis.com/v1/images:annotate?key=AIzaSyCQmFMGebUKwKal5xqLrPd86mGgcwjCTjc",
+      'https://vision.googleapis.com/v1/images:annotate?key=$apiKey',
     );
 
     final body = {
-      "requests": [
+      'requests': [
         {
-          "image": {"content": base64Image},
-          "features": [
-            {"type": "LABEL_DETECTION", "maxResults": 10}
+          'image': {'content': base64Image},
+          'features': [
+            {'type': 'LABEL_DETECTION', 'maxResults': 10}
           ]
         }
       ]
@@ -28,22 +32,30 @@ class GoogleVisionService {
     final response = await http
         .post(
       url,
-      headers: {"Content-Type": "application/json"},
+      headers: {'Content-Type': 'application/json'},
       body: jsonEncode(body),
     )
         .timeout(const Duration(seconds: 15));
 
     if (response.statusCode != 200) {
-      throw Exception("Vision API error: ${response.body}");
+      throw Exception('Vision API error (${response.statusCode}): ${response.body}');
     }
 
     final result = jsonDecode(response.body);
-    if (result["responses"] == null) {
-      throw Exception("Invalid response: ${response.body}");
+    if (result['responses'] == null || result['responses'].isEmpty) {
+      return [];
     }
-    final labels = result["responses"][0]["labelAnnotations"];
+
+    final labels = result['responses'][0]['labelAnnotations'];
     if (labels == null) return [];
 
-    return labels.map<String>((e) => e["description"]).toList();
+    // Safely map descriptions and remove duplicates
+    final out = <String>{};
+    for (final e in labels) {
+      final desc = e['description'];
+      if (desc is String && desc.isNotEmpty) out.add(desc);
+    }
+
+    return out.toList();
   }
 }

@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import '../services/fb_auth.dart';
 
 class UserCreatePage extends StatefulWidget {
   const UserCreatePage({super.key});
@@ -15,6 +16,7 @@ class _UserCreatePageState extends State<UserCreatePage> {
   final _passwordCtrl = TextEditingController();
   final _passwordConfirmCtrl = TextEditingController();
   bool _loading = false;
+  bool _platformLoading = false;
 
   @override
   void dispose() {
@@ -51,6 +53,23 @@ class _UserCreatePageState extends State<UserCreatePage> {
     }
   }
 
+  Future<void> _createWithGoogle() async {
+    setState(() => _platformLoading = true);
+    try {
+      final user = await FbAuth.instance.signInWithGoogle();
+      if (user == null) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Google サインインがキャンセルされました')));
+        return;
+      }
+      // Google でサインインすると Firebase 側にユーザーが作成されます。
+      if (mounted) Navigator.of(context).pop();
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Google サインイン失敗: $e')));
+    } finally {
+      if (mounted) setState(() => _platformLoading = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -58,44 +77,68 @@ class _UserCreatePageState extends State<UserCreatePage> {
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(16.0),
-          child: Form(
-            key: _formKey,
+          child: SingleChildScrollView(
             child: Column(
               children: [
-                TextFormField(
-                  controller: _displayNameCtrl,
-                  decoration: const InputDecoration(labelText: '表示名'),
-                  validator: (v) => (v == null || v.trim().isEmpty) ? '表示名を入力してください' : null,
-                ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  controller: _emailCtrl,
-                  decoration: const InputDecoration(labelText: 'メールアドレス'),
-                  keyboardType: TextInputType.emailAddress,
-                  validator: (v) => (v == null || !v.contains('@')) ? '正しいメールアドレスを入力してください' : null,
-                ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  controller: _passwordCtrl,
-                  decoration: const InputDecoration(labelText: 'パスワード'),
-                  obscureText: true,
-                  validator: (v) => (v == null || v.length < 6) ? '6文字以上のパスワードを入力してください' : null,
-                ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  controller: _passwordConfirmCtrl,
-                  decoration: const InputDecoration(labelText: 'パスワード（確認）'),
-                  obscureText: true,
-                  validator: (v) => (v != _passwordCtrl.text) ? 'パスワードが一致しません' : null,
-                ),
-                const SizedBox(height: 20),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: _loading ? null : _createAccount,
-                    child: _loading ? const SizedBox(height: 16, width: 16, child: CircularProgressIndicator(strokeWidth: 2)) : const Text('作成'),
+                // --- メール作成フォーム ---
+                Form(
+                  key: _formKey,
+                  child: Column(
+                    children: [
+                      TextFormField(
+                        controller: _displayNameCtrl,
+                        decoration: const InputDecoration(labelText: '表示名'),
+                        validator: (v) => (v == null || v.trim().isEmpty) ? '表示名を入力してください' : null,
+                      ),
+                      const SizedBox(height: 12),
+                      TextFormField(
+                        controller: _emailCtrl,
+                        decoration: const InputDecoration(labelText: 'メールアドレス'),
+                        keyboardType: TextInputType.emailAddress,
+                        validator: (v) => (v == null || !v.contains('@')) ? '正しいメールアドレスを入力してください' : null,
+                      ),
+                      const SizedBox(height: 12),
+                      TextFormField(
+                        controller: _passwordCtrl,
+                        decoration: const InputDecoration(labelText: 'パスワード'),
+                        obscureText: true,
+                        validator: (v) => (v == null || v.length < 6) ? '6文字以上のパスワードを入力してください' : null,
+                      ),
+                      const SizedBox(height: 12),
+                      TextFormField(
+                        controller: _passwordConfirmCtrl,
+                        decoration: const InputDecoration(labelText: 'パスワード（確認）'),
+                        obscureText: true,
+                        validator: (v) => (v != _passwordCtrl.text) ? 'パスワードが一致しません' : null,
+                      ),
+                      const SizedBox(height: 20),
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed: _loading ? null : _createAccount,
+                          child: _loading ? const SizedBox(height: 16, width: 16, child: CircularProgressIndicator(strokeWidth: 2)) : const Text('メールで作成'),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
+
+                const SizedBox(height: 24),
+                const Divider(),
+                const SizedBox(height: 12),
+
+                // --- プラットフォーム作成（Google） ---
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(backgroundColor: Colors.white, foregroundColor: Colors.black),
+                    icon: Image.asset('assets/images/google_logo.png', height: 20, width: 20, errorBuilder: (_, __, ___) => const Icon(Icons.login)),
+                    label: _platformLoading ? const SizedBox(height: 16, width: 16, child: CircularProgressIndicator(strokeWidth: 2)) : const Text('Google で作成 / サインイン'),
+                    onPressed: _platformLoading ? null : _createWithGoogle,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                const Text('Google アカウントで作成すると Firebase にユーザーが作成されます。'),
               ],
             ),
           ),

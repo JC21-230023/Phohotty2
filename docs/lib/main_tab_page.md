@@ -1,11 +1,7 @@
-# `pages/main_tab_page.dart`
+## `pages/main_tab_page.dart`
 
-## 概要
-
-このファイルは、アプリケーションのメインとなるタブナビゲーションを提供します。
-
-## 主な機能
-
-*   `BottomNavigationBar`を使用して、`HomePage`と`TagLensPage`の2つのページを切り替えます。
-*   `IndexedStack`を使用することで、タブを切り替えても各ページの状態を保持します。
-*   下のナビゲーションバーには「Gallery」と「Tag Lens」の2つのタブがあります。
+- **目的**: アプリケーションのメイン画面となる、タブ切り替えのインターフェースを提供します。
+- **主要機能**:
+    - `BottomNavigationBar`を使用して、複数のページを切り替えるためのタブバーを画面下部に表示します。
+    - タブは「Gallery」(`HomePage`)と「Tag Lens」(`TagLensPage`)の2つで構成されます。
+    - `IndexedStack`ウィジェットを使用して、選択されたタブのページのみを表示し、非表示のページの状態は保持します。

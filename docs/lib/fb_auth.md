@@ -1,19 +1,10 @@
+## `services/fb_auth.dart`
 
-# `lib/services/fb_auth.dart`
-
-`fb_auth.dart`は、Firebase Authenticationを使用したユーザー認証のロジックをカプセル化し、サインイン、サインアウト、および認証状態の監視の機能を提供します。
-
-## 主な機能
-
-- **Firebase Authenticationインスタンス:**
-  - `FirebaseAuth.instance`への参照を保持し、認証操作を実行するために使用します。
-
-- **認証状態のストリーム:**
-  - `authStateChanges`ストリームを公開し、ユーザーの認証状態（サインインまたはサインアウト）の変更をリッスンできるようにします。
-
-- **サインイン:**
-  - `signInWithGoogle`メソッドを実装し、`google_sign_in`パッケージを使用してGoogleアカウントでのサインインフローを処理します。
-  - 取得したGoogle認証情報を使用して`signInWithCredential`を呼び出し、Firebaseにサインインします。
-
-- **サインアウト:**
-  - `signOut`メソッドを提供し、`FirebaseAuth.instance.signOut()`を呼び出して、ユーザーをアプリケーションからサインアウトさせます。
+- **目的**: Firebase Authenticationに関する処理をまとめたサービスクラスです。
+- **主要機能**:
+    - `FbUser`クラス: Firebaseの`User`オブジェクトを、アプリケーション内で扱いやすいように抽象化したモデルです。
+    - `FbAuth`クラス (シングルトン):
+        - `authStateChanges`: Firebaseの認証状態の変更をStreamとして提供します。これにより、ログイン状態をリアルタイムに監視できます。
+        - `currentUser`: 現在ログインしているユーザーの情報を`FbUser`オブジェクトとして取得します。
+        - `signInWithGoogle`: Googleサインインを実行し、成功すると`FbUser`オブジェクトを返します。
+        - `signOut`: FirebaseおよびGoogleからサインアウトします。

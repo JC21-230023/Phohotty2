@@ -1,17 +1,10 @@
+## `services/google_vision.dart`
 
-# `lib/services/google_vision.dart`
-
-`google_vision.dart`は、Google Cloud Vision APIとの対話を担当し、画像からラベル（タグ）を抽出する機能を提供します。
-
-## 主な機能
-
-- **API認証:**
-  - `_getAuthClient`メソッドを実装し、サービスアカウントの認証情報（`.env`ファイルから読み込まれる）を使用して、Google Cloudへの認証済みHTTPクライアントを作成します。
-
-- **画像ラベリング:**
-  - `tagImage`メソッドは、画像ファイルを受け取り、Google Cloud Vision APIに送信してラベル検出をリクエストします。
-  - `build`メソッドで、APIリクエストのJSONボディを構築し、画像のバイトをBase64でエンコードして含めます。
-
-- **レスポンスの処理:**
-  - APIからのレスポンスを解析し、`labelAnnotations`からラベルの説明を抽出して、`List<String>`として返します。
-  - エラーが発生した場合は、コンソールに出力し、空のリストを返します。
+- **目的**: Google Cloud Vision APIと通信し、画像のラベル（タグ）を分析する機能を提供します。
+- **主要機能**:
+    - `analyzeLabels`メソッド:
+        - `Uint8List`形式の画像データを受け取ります。
+        - 画像をBase64形式にエンコードし、Google Cloud Vision APIのエンドポイントにHTTP POSTリクエストを送信します。
+        - APIからのレスポンスをJSONとして解析し、画像のラベル（説明）を抽出します。
+        - 抽出したラベルのリスト（重複なし）を`List<String>`として返します。
+        - APIキーが設定されていない場合や、APIからの応答がエラーだった場合は、例外をスローします。

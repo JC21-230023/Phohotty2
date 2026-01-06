@@ -1,4 +1,3 @@
-// filepath: c:\Users\230484\StudioProjects\phototty\lib\pages\settings_page.dart
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -11,24 +10,12 @@ class SettingsPage extends StatefulWidget {
 }
 
 class _SettingsPageState extends State<SettingsPage> {
-  bool _photoPermissionGranted = false;
-  bool _locationPermissionGranted = false;
   bool _aiTaggingEnabled = false;
 
   @override
   void initState() {
     super.initState();
-    _loadPermissions();
     _loadSettings();
-  }
-
-  Future<void> _loadPermissions() async {
-    final photoStatus = await Permission.photos.status;
-    final locationStatus = await Permission.location.status;
-    setState(() {
-      _photoPermissionGranted = photoStatus.isGranted;
-      _locationPermissionGranted = locationStatus.isGranted;
-    });
   }
 
   Future<void> _loadSettings() async {
@@ -38,21 +25,7 @@ class _SettingsPageState extends State<SettingsPage> {
     });
   }
 
-  Future<void> _requestPhotoPermission() async {
-    final status = await Permission.photos.request();
-    setState(() {
-      _photoPermissionGranted = status.isGranted;
-    });
-  }
-
-  Future<void> _requestLocationPermission() async {
-    final status = await Permission.location.request();
-    setState(() {
-      _locationPermissionGranted = status.isGranted;
-    });
-  }
-
-  Future<void> _toggleAiTagging(bool value) async {
+  Future<void> _saveAiTaggingEnabled(bool value) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('aiTaggingEnabled', value);
     setState(() {
@@ -60,34 +33,61 @@ class _SettingsPageState extends State<SettingsPage> {
     });
   }
 
+  Future<void> _requestPhotoPermission(BuildContext context) async {
+    final status = await Permission.photos.request();
+
+    if (status.isGranted) {
+      _show(context, '写真フォルダへのアクセスを許可しました');
+    } else if (status.isPermanentlyDenied) {
+      _openSettings(context);
+    } else {
+      _show(context, '写真フォルダへのアクセスが拒否されました');
+    }
+  }
+
+  Future<void> _requestLocationPermission(BuildContext context) async {
+    final status = await Permission.locationWhenInUse.request();
+
+    if (status.isGranted) {
+      _show(context, '位置情報へのアクセスを許可しました');
+    } else if (status.isPermanentlyDenied) {
+      _openSettings(context);
+    } else {
+      _show(context, '位置情報へのアクセスが拒否されました');
+    }
+  }
+
+  void _openSettings(BuildContext context) {
+    openAppSettings();
+    _show(context, '設定画面から権限を有効にしてください');
+  }
+
+  void _show(BuildContext context, String message) {
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(message)));
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("設定")),
+      appBar: AppBar(title: const Text('設定')),
       body: ListView(
         children: [
           SwitchListTile(
-            title: const Text('写真フォルダへのアクセス許可'),
-            value: _photoPermissionGranted,
-            onChanged: (value) {
-              if (value && !_photoPermissionGranted) {
-                _requestPhotoPermission();
-              }
-            },
-          ),
-          SwitchListTile(
-            title: const Text('位置情報へのアクセス許可'),
-            value: _locationPermissionGranted,
-            onChanged: (value) {
-              if (value && !_locationPermissionGranted) {
-                _requestLocationPermission();
-              }
-            },
-          ),
-          SwitchListTile(
             title: const Text('AIによる画像へのタグ付け機能'),
+            subtitle: const Text('Vision AI を使用して画像に自動でタグを付ける'),
             value: _aiTaggingEnabled,
-            onChanged: _toggleAiTagging,
+            onChanged: _saveAiTaggingEnabled,
+          ),
+          ListTile(
+            leading: const Icon(Icons.photo_library),
+            title: const Text('写真フォルダへのアクセス許可'),
+            onTap: () => _requestPhotoPermission(context),
+          ),
+          ListTile(
+            leading: const Icon(Icons.location_on),
+            title: const Text('位置情報へのアクセス許可'),
+            onTap: () => _requestLocationPermission(context),
           ),
         ],
       ),

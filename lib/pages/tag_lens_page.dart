@@ -2,6 +2,7 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../widgets/tag_chip.dart';
 import '../services/google_vision.dart';
@@ -24,6 +25,7 @@ class _TagLensPageState extends State<TagLensPage> {
 
   bool loading = false;
   String? errorMessage;
+  bool aiEnabled = false;
 
   final picker = ImagePicker();
   final customTagController = TextEditingController();
@@ -34,12 +36,18 @@ class _TagLensPageState extends State<TagLensPage> {
   @override
   void initState() {
     super.initState();
+    _loadSettings();
+  }
 
+  Future<void> _loadSettings() async {
+    final prefs = await SharedPreferences.getInstance();
     final apiKey = dotenv.env['GOOGLE_VISION_API_KEY'] ?? '';
-    if (apiKey.isEmpty) {
-      errorMessage = 'Google Vision API キーが設定されていません';
-    }
-
+    setState(() {
+      aiEnabled = prefs.getBool('aiTaggingEnabled') ?? false;
+      if (apiKey.isEmpty) {
+        errorMessage = 'Google Vision API キーが設定されていません';
+      }
+    });
     vision = GoogleVisionService(apiKey: apiKey);
   }
 
@@ -67,22 +75,28 @@ class _TagLensPageState extends State<TagLensPage> {
       errorMessage = null;
     });
 
-    try {
-      // ① AIで英語タグ取得
-      final labels = await vision.analyzeLabels(bytes);
+    if (aiEnabled) {
+      try {
+        // ① AIで英語タグ取得
+        final labels = await vision.analyzeLabels(bytes);
 
-      // 辞書登録込みで日本語化
-      final jaTags =
-        await TagTranslator.toJapaneseSmartList(labels);
+        // 辞書登録込みで日本語化
+        final jaTags =
+          await TagTranslator.toJapaneseSmartList(labels);
+        setState(() {
+          suggestedTags = jaTags;
+          selectedTags = jaTags.toSet();
+          loading = false;
+        });
+      } catch (e) {
+        setState(() {
+          loading = false;
+          errorMessage = 'タグ解析エラー: $e';
+        });
+      }
+    } else {
       setState(() {
-        suggestedTags = jaTags;
-        selectedTags = jaTags.toSet();
         loading = false;
-      });
-    } catch (e) {
-      setState(() {
-        loading = false;
-        errorMessage = 'タグ解析エラー: $e';
       });
     }
   }
@@ -182,7 +196,7 @@ class _TagLensPageState extends State<TagLensPage> {
                   const SizedBox(height: 24),
 
                   const Text(
-                    'タグ候補（日本語）',
+                    'タグ候補',
                     style: TextStyle(fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 12),

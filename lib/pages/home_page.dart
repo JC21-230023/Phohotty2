@@ -62,7 +62,7 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('ギャラリー')),
+      appBar: AppBar(title: const Text('写真フォルダ一覧')),
       body: _buildBody(),
     );
   }

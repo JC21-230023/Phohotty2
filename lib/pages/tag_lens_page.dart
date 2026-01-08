@@ -3,11 +3,13 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 
 import '../widgets/tag_chip.dart';
 import '../services/google_vision.dart';
 import '../services/tag_translator.dart';
 import '../services/local_storage.dart';
+import '../services/fb_auth.dart';
 
 class TagLensPage extends StatefulWidget {
   const TagLensPage({super.key});
@@ -127,18 +129,37 @@ class _TagLensPageState extends State<TagLensPage> {
   // ===============================
   Future<void> saveImage() async {
     if (imageBytes == null || selectedTags.isEmpty) return;
-
+//-=-=-=-=fbStorageに保存する処理-=-=-=-=
     try {
       setState(() => loading = true);
 
-      final path = await local.saveImage(imageBytes!);
-      await local.saveImageTags(path, selectedTags.toList());
+      final user = FbAuth.instance.currentUser;
+      if (user == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('ログインしてください')),
+        );
+        return;
+      }
+
+      final uid = user.uid;
+      final fileName = '${DateTime.now().millisecondsSinceEpoch}.jpg';
+      final storagePath = 'users/$uid/$fileName';
+
+      final storageRef = FirebaseStorage.instance.ref().child(storagePath);
+      final metadata = SettableMetadata(contentType: 'image/jpeg');
+
+      final uploadTask = storageRef.putData(imageBytes!, metadata);
+      await uploadTask;
+      final downloadUrl = await storageRef.getDownloadURL();
+
+      // SharedPreferences に保存（ローカルのギャラリーは URL をパスとして格納）
+      await local.saveImageTags(downloadUrl, selectedTags.toList());
 
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('画像とタグを保存しました'),
+          content: Text('画像とタグを保存しました（クラウド）'),
           backgroundColor: Colors.green,
         ),
       );

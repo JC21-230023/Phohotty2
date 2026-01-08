@@ -46,7 +46,7 @@ dependencies:
   photo_manager: ^3.2.0
   google_maps_flutter: 2.14.0
   geolocator: ^14.0.2
-  permission_handler: ^12.0.1  # Temporarily disabled due to Gradle incompatibility
+  permission_handler: ^11.4.0  # v11 or later avoids v1-embedding issues
   translator: ^1.0.4+1
 
   # The following adds the Cupertino Icons font to your application.

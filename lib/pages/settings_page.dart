@@ -10,7 +10,7 @@ class SettingsPage extends StatefulWidget {
 }
 
 class _SettingsPageState extends State<SettingsPage> {
-  bool _aiTaggingEnabled = false;
+  bool _aiTaggingEnabled = true;
 
   @override
   void initState() {
@@ -21,7 +21,7 @@ class _SettingsPageState extends State<SettingsPage> {
   Future<void> _loadSettings() async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
-      _aiTaggingEnabled = prefs.getBool('aiTaggingEnabled') ?? false;
+      _aiTaggingEnabled = prefs.getBool('aiTaggingEnabled') ?? true;
     });
   }
 
@@ -73,12 +73,7 @@ class _SettingsPageState extends State<SettingsPage> {
       appBar: AppBar(title: const Text('設定')),
       body: ListView(
         children: [
-          SwitchListTile(
-            title: const Text('AIによる画像へのタグ付け機能'),
-            subtitle: const Text('Vision AI を使用して画像に自動でタグを付ける 再起動時反映されます'),
-            value: _aiTaggingEnabled,
-            onChanged: _saveAiTaggingEnabled,
-          ),
+          // Vision AI はデフォルトで有効。設定項目は削除しました。
           ListTile(
             leading: const Icon(Icons.photo_library),
             title: const Text('写真フォルダへのアクセス許可'),

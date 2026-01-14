@@ -46,7 +46,7 @@ class _TagLensPageState extends State<TagLensPage> {
     final prefs = await SharedPreferences.getInstance();
     final apiKey = dotenv.env['GOOGLE_VISION_API_KEY'] ?? '';
     setState(() {
-      aiEnabled = prefs.getBool('aiTaggingEnabled') ?? false;
+      aiEnabled = prefs.getBool('aiTaggingEnabled') ?? true;
       if (apiKey.isEmpty) {
         errorMessage = 'Google Vision API キーが設定されていません';
       }

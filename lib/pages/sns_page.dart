@@ -5,6 +5,7 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:phototty/services/fbstore_getter.dart';
 import '../services/storage_photo_getter.dart';
 import '../services/fb_auth.dart';
 
@@ -172,6 +173,15 @@ class _SnsPageState extends State<SnsPage> {
         position?.longitude ?? 139.6503,
       ),
       'createdAt': FieldValue.serverTimestamp(),
+      //以下自力作成(要注意)
+      'postedBY': FbAuth.instance.currentUser?.uid,
+
+      'postTagList': _selectedImageName != null && FbAuth.instance.currentUser != null
+          ? await getTagListAsField(
+              userId: FbAuth.instance.currentUser!.uid,
+              imageName: _selectedImageName!,
+            )
+          : ["端末画像","タグなし"],
     });
 
     setState(() {

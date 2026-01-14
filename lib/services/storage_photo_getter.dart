@@ -6,6 +6,7 @@ class StoragePhoto {
   final String fullPath;
   final String downloadUrl;
 
+
   StoragePhoto({
     required this.name,
     required this.fullPath,

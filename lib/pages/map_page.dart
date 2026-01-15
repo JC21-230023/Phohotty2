@@ -1,7 +1,9 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
-
+//import 'package:phototty/services/post_marker.dart';
+import 'package:phototty/services/post_marker.dart';
 class MapPage extends StatefulWidget {
   const MapPage({super.key});
 
@@ -12,11 +14,15 @@ class MapPage extends StatefulWidget {
 class _MapPageState extends State<MapPage> {
   GoogleMapController? mapController;
   CameraPosition? _initialCameraPosition;
+  //**追加****
+    final Set<Marker> _markers = {};
+
 
   @override
   void initState() {
     super.initState();
     _setCurrentLocation();
+    _loadPostMarkers();
   }
 
   Future<void> _setCurrentLocation() async {
@@ -50,6 +56,20 @@ class _MapPageState extends State<MapPage> {
       );
     });
   }
+  //==========追加=======
+    Set<Marker> postMarker() => _markers;
+    //========
+    
+    Future<void> _loadPostMarkers() async {
+      final Set<Marker> tmp = await getPostMarkers();
+      setState(() {
+        _markers
+          ..clear()
+          ..addAll(tmp);
+      });
+    }
+
+  //====================
 
   @override
   Widget build(BuildContext context) {
@@ -60,7 +80,7 @@ class _MapPageState extends State<MapPage> {
     }
 
     return Scaffold(
-      appBar: AppBar(title: const Text("画像MAPSNS")),
+      appBar: AppBar(title: const Text("画像MAP_SNS!")),
       body: GoogleMap(
         initialCameraPosition: _initialCameraPosition!,
         myLocationEnabled: true, // 青い現在地マーカー
@@ -68,6 +88,7 @@ class _MapPageState extends State<MapPage> {
         onMapCreated: (controller) {
           mapController = controller;
         },
+        markers: _markers,
       ),
     );
   }

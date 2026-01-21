@@ -2,19 +2,19 @@
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_core/firebase_core.dart';
-
 import 'dart:ui' as ui;
-import 'dart:typed_data';
 import 'package:http/http.dart' as http;
-import 'package:flutter/material.dart'; // Colors, Paint などを使う場合
-import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 
 Future<Set<Marker>> getPostMarkers() async {
-  final Set<Marker> markers = {};
+  //final Set<Marker> markers = {};
   final snap = await FirebaseFirestore.instance.collection('posts').get();
+ final Set<Marker> markers=await doc2Marksers(snap);
+  return markers; 
+}
 
+
+Future<Set<Marker>> doc2Marksers(QuerySnapshot<Map<String, dynamic>> snap)async{
+  final Set<Marker> ans={};
     for (var doc in snap.docs) {
       final data = doc.data();
       final GeoPoint geoPoint = data['location'];
@@ -25,24 +25,22 @@ Future<Set<Marker>> getPostMarkers() async {
     final BitmapDescriptor icon = imageUrl.isEmpty
         ? BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed)
         : await _iconFromImageUrl(imageUrl, size: 96, borderWidth: 4);
-
-
-      final marker = Marker(
+    final marker = Marker(
         markerId: MarkerId(doc.id),
         position: LatLng(geoPoint.latitude, geoPoint.longitude),
         infoWindow: InfoWindow(title: title),
-        icon: icon
-      );
-      markers.add(marker);
-      
+        icon: icon);
+      ans.add(marker);
     }
-  return markers; 
+       return ans;
 }
+
+
 
 ///gemiさん作
 
 /// 画像アイコンのキャッシュ（imageUrl → BitmapDescriptor）
-final Map<String, BitmapDescriptor> _iconCache = {};
+final Map<String, BitmapDescriptor> iconCache = {};
 
 /// imageUrl の画像を円形に切り抜いて Marker アイコンに変換
 Future<BitmapDescriptor> _iconFromImageUrl(
@@ -53,8 +51,8 @@ Future<BitmapDescriptor> _iconFromImageUrl(
   if (imageUrl.isEmpty) {
     return BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed);
   }
-  if (_iconCache.containsKey(imageUrl)) {
-    return _iconCache[imageUrl]!;
+  if (iconCache.containsKey(imageUrl)) {
+    return iconCache[imageUrl]!;
   }
 
   try {
@@ -111,7 +109,7 @@ Future<BitmapDescriptor> _iconFromImageUrl(
         .asUint8List();
 
     final icon = BitmapDescriptor.fromBytes(pngBytes);
-    _iconCache[imageUrl] = icon;
+    iconCache[imageUrl] = icon;
     return icon;
   } catch (e) {
     debugPrint('Icon generate error: $e');
@@ -120,40 +118,3 @@ Future<BitmapDescriptor> _iconFromImageUrl(
   }
 }
 
-
-/*
-
-
-  // アイコン生成を並列化（大量だと重くなるので注意）
-  await Future.wait(snap.docs.map((doc) async {
-    final data = doc.data();
-
-    final geo = data['location'];
-    if (geo is! GeoPoint) return; // GeoPoint 以外はスキップ
-
-    final geoPoint = geo as GeoPoint;
-    final String title = (data['title'] ?? data['description'] ?? 'No Title').toString();
-    final String imageUrl = (data['imageUrl'] ?? '').toString();
-
-    // 画像アイコン（imageUrl が空なら標準ピン）
-    final BitmapDescriptor icon = imageUrl.isEmpty
-        ? BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed)
-        : await _iconFromImageUrl(imageUrl, size: 96, borderWidth: 4);
-
-    final marker = Marker(
-      markerId: MarkerId(doc.id),
-      position: LatLng(geoPoint.latitude, geoPoint.longitude),
-      infoWindow: InfoWindow(title: title),
-      icon: icon,
-      // onTap: () { /* 詳細画面へ遷移など */ },
-    );
-
-    markers.add(marker);
-  }));
-
-  return markers;
-}
-
-
-
-*/ 

@@ -1,9 +1,12 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+//import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
-//import 'package:phototty/services/post_marker.dart';
+import 'package:phototty/services/post_fillter.dart';
 import 'package:phototty/services/post_marker.dart';
+//import 'package:phototty/services/post_marker.dart';
+import 'package:phototty/widgets/search_input_widget.dart';
+
 class MapPage extends StatefulWidget {
   const MapPage({super.key});
 
@@ -81,15 +84,36 @@ class _MapPageState extends State<MapPage> {
 
     return Scaffold(
       appBar: AppBar(title: const Text("画像MAP_SNS!")),
-      body: GoogleMap(
-        initialCameraPosition: _initialCameraPosition!,
-        myLocationEnabled: true, // 青い現在地マーカー
-        myLocationButtonEnabled: true,
-        onMapCreated: (controller) {
-          mapController = controller;
-        },
-        markers: _markers,
-      ),
+
+      body:  Column(
+      children: [ 
+        SizedBox( height: 56, // 好みで 52〜64 あたり
+        child: SearchInputBar(
+            onSubmit:(query) {              
+              string2markers(query).then((markers) {
+                setState(() {
+                  _markers
+                    ..clear()
+                    ..addAll(markers);
+                });
+              });
+              },
+          ),
+        ),
+
+        Expanded(
+          child:GoogleMap(
+            initialCameraPosition: _initialCameraPosition!,
+            myLocationEnabled: true, // 青い現在地マーカー
+            myLocationButtonEnabled: true,
+            onMapCreated: (controller) {
+              mapController = controller;
+            },
+            markers: _markers,
+          )
+        ),
+      ]
+      )
     );
   }
 

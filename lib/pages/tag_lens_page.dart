@@ -4,6 +4,8 @@ import 'package:image_picker/image_picker.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'dart:developer' as developer;//ログ用
+
 
 import '../widgets/tag_chip.dart';
 import '../services/google_vision.dart';
@@ -11,6 +13,7 @@ import '../services/tag_translator.dart';
 import '../services/local_storage.dart';
 import '../services/fb_auth.dart';
 import '../services/tag_image_saver.dart';
+import '../widgets/taglist_widget.dart';//タグを扱う
 
 class TagLensPage extends StatefulWidget {
   const TagLensPage({super.key});
@@ -23,8 +26,8 @@ class _TagLensPageState extends State<TagLensPage> {
   Uint8List? imageBytes;
 
   List<String> suggestedTags = [];
-  Set<String> selectedTags = {};
-  List<String> customTags = [];
+  Set<String> _selectedTags = {};//widgetのTagListから取得
+  //List<String> customTags = [];
 
   bool loading = false;
   String? errorMessage;
@@ -72,8 +75,8 @@ class _TagLensPageState extends State<TagLensPage> {
     setState(() {
       imageBytes = bytes;
       suggestedTags.clear();
-      selectedTags.clear();
-      customTags.clear();
+      _selectedTags.clear();
+      //customTags.clear();
       loading = true;
       errorMessage = null;
     });
@@ -88,7 +91,7 @@ class _TagLensPageState extends State<TagLensPage> {
           await TagTranslator.toJapaneseSmartList(labels);
         setState(() {
           suggestedTags = jaTags;
-          selectedTags = jaTags.toSet();
+          _selectedTags = jaTags.toSet();
           loading = false;
         });
       } catch (e) {
@@ -103,9 +106,9 @@ class _TagLensPageState extends State<TagLensPage> {
       });
     }
   }
-
+/*
   // ===============================
-  // カスタムタグ追加
+  // カスタムタグ追加//taglist_widgetへ移動
   // ===============================
   void addCustomTag() {
     final tag = customTagController.text.trim();
@@ -124,12 +127,14 @@ class _TagLensPageState extends State<TagLensPage> {
       customTagController.clear();
     });
   }
-
+*/
   // ===============================
-  // 保存処理
+  // 保存処理(fbStore:tag,fbStorage:image)
   // ===============================
   Future<void> saveImage() async {
-    if (imageBytes == null || selectedTags.isEmpty) return;
+     developer.log('saveImage called');
+      
+    if (imageBytes == null || _selectedTags.isEmpty) return;
 
     try {
       setState(() => loading = true);
@@ -147,7 +152,7 @@ class _TagLensPageState extends State<TagLensPage> {
       // TagImageSaver で処理を統一
       await TagImageSaver.saveImageWithTags(
         imageBytes: imageBytes!,
-        tags: selectedTags.toList(),
+        tags: _selectedTags.toList(),//(widgetの)tagList.selectedTagsに
         uid: uid,
       );
 
@@ -190,7 +195,44 @@ class _TagLensPageState extends State<TagLensPage> {
           ? const Center(child: CircularProgressIndicator())
           : Padding(
               padding: const EdgeInsets.all(16),
-              child: ListView(
+              child: ListView(           // ← ここが親（children: を使える）
+                 children: [
+                    InkWell(
+                      onTap: pickImage,
+                      child: Container(
+                        height: 220,
+                        decoration: BoxDecoration(
+                          color: Colors.blue.shade50,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: Colors.blue.shade200),
+                        ),
+                        child: imageBytes == null
+                            ? const Center(
+                                child: Text('クリックして画像を選択'),//v2：更新の確認
+                              )
+                            : Image.memory(imageBytes!, fit: BoxFit.cover),
+                      ),
+                    ),
+                    TagSelector(
+                      initialSuggestedTags:suggestedTags,//AIのタグ
+                        //["隔離テスト","初期タグ","画像選択追加"],
+                      onChanged: (tags) {
+                        setState(() {
+                          _selectedTags = tags;
+                        });
+                      },
+                    ), 
+                    ElevatedButton.icon(
+                      icon: const Icon(Icons.save),
+                      label: const Text('保存'),
+                      onPressed: saveImage,
+                    )             
+                 ]              
+              ),
+
+              /*/＝＝＝＝旧タグリストここから＝＝＝＝
+              child: 
+               ListView(
                 children: [
                   // 画像選択
                   InkWell(
@@ -269,7 +311,7 @@ class _TagLensPageState extends State<TagLensPage> {
                       IconButton(
                         icon: const Icon(Icons.add),
                         onPressed: addCustomTag,
-                      )
+                      )//タグを追加
                     ],
                   ),
 
@@ -281,7 +323,8 @@ class _TagLensPageState extends State<TagLensPage> {
                     onPressed: saveImage,
                   )
                 ],
-              ),
+              ),///＝＝＝＝旧タグリストここまで＝＝＝＝*/
+
             ),
     );
   }

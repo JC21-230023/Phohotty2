@@ -6,6 +6,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:phototty/services/fbstore_getter.dart';
+import 'package:phototty/widgets/taglist_widget.dart';
 import '../services/storage_photo_getter.dart';
 import '../services/fb_auth.dart';
 
@@ -23,6 +24,10 @@ class _SnsPageState extends State<SnsPage> {
   final TextEditingController _descriptionController = TextEditingController();
   bool _isUploading = false;
 
+  List<String> suggestedTags = [];//画像が持つタグ(初期値で
+  Set<String> _selectedTags = {};//選択されたタグ
+
+
   // 端末からの画像選択（従来の機能）
   Future<void> _pickImageFromDevice() async {
     final pickedFile = await ImagePicker().pickImage(source: ImageSource.gallery);
@@ -31,6 +36,10 @@ class _SnsPageState extends State<SnsPage> {
         _imageFile = File(pickedFile.path);
         _selectedImageUrl = null;
         _selectedImageName = null;
+/*selectedTags,suggestedTagsのリセット
+        suggestedTags = [];
+        _selectedTags = {};
+*/
       });
     }
   }
@@ -62,6 +71,17 @@ class _SnsPageState extends State<SnsPage> {
       if (mounted) {
         _showImageSelectionBottomSheet(imageList);
       }
+      /* if(_selectedImageName != null){
+         print("newTags__ImageName: $_selectedImageName");
+        List<String> newTags = await getTagListAsField(
+                            userId: FbAuth.instance.currentUser!.uid,
+                            imageName: _selectedImageName??"選択されていない");
+        setState(() {//setState(() async{…　不可
+          suggestedTags = newTags;
+          _selectedTags = suggestedTags.toSet();
+        });
+      }*/
+
     } catch (e) {
       debugPrint('FirebaseStorage読み込み失敗: $e');
       if (mounted) {
@@ -95,13 +115,22 @@ class _SnsPageState extends State<SnsPage> {
                 itemBuilder: (context, index) {
                   final image = imageList[index];
                   return GestureDetector(
-                    onTap: () {
+                    onTap: () async{
                       // 画像を選択して状態を更新
-                      setState(() {
+                      List<String>newTags = await getTagListAsField(
+                            userId: FbAuth.instance.currentUser!.uid,
+                            imageName: image.name);
+
+                      setState((){
                         _selectedImageUrl = image.downloadUrl;
                         _selectedImageName = image.name;
-                        _imageFile = null; // 端末の画像をクリア
+                        print("Bottomsheet_ImageName: $_selectedImageName");
+                        suggestedTags = newTags;
+                        _selectedTags = suggestedTags.toSet();
+
+                        _imageFile = null;// 端末の画像をクリア
                       });
+                      
                       Navigator.pop(context);
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(content: Text('画像「${image.name}」を選択しました')),
@@ -176,12 +205,18 @@ class _SnsPageState extends State<SnsPage> {
       //以下自力作成(要注意)
       'postedBY': FbAuth.instance.currentUser?.uid,
 
-      'postTagList': _selectedImageName != null && FbAuth.instance.currentUser != null
-          ? await getTagListAsField(
-              userId: FbAuth.instance.currentUser!.uid,
-              imageName: _selectedImageName!,
-            )
-          : ["端末画像","タグなし"],
+      'postTagList':_selectedTags,
+        //＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝
+        //＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝
+        //画像からタグを取得
+      /*
+        _selectedImageName != null && FbAuth.instance.currentUser != null
+            ? await getTagListAsField(
+                userId: FbAuth.instance.currentUser!.uid,
+                imageName: _selectedImageName!,
+              )
+            : ["端末画像","タグなし"],*/
+        //ここまで
     });
 
     setState(() {
@@ -201,23 +236,34 @@ class _SnsPageState extends State<SnsPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('SNS投稿')),
-      body: Padding(
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            // 選択した画像を表示
-            if (_imageFile != null)
-              Image.file(_imageFile!, height: 300)
-            else if (_selectedImageUrl != null)
-              Image.network(_selectedImageUrl!, height: 300)
-            else
-              const Placeholder(fallbackHeight: 300),
-            
+           InkWell(
+            onTap: (){},
+            child: Container(
+                height: 220,
+                decoration: BoxDecoration(
+                  color: Colors.green.shade50,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: const Color.fromARGB(255, 114, 206, 137)),
+                ),
+
+                
+                child: _imageFile != null ?
+                Image.file(_imageFile!):
+                _selectedImageUrl != null ?
+                  Image.network(_selectedImageUrl!):
+                const Center(child: Text('クリックして画像を選択'),)
+             ),
+          ),
             const SizedBox(height: 8),
             TextField(
               controller: _descriptionController,
               decoration: const InputDecoration(labelText: '説明文'),
             ),
+
             const SizedBox(height: 16),
             Row(
               children: [
@@ -231,6 +277,14 @@ class _SnsPageState extends State<SnsPage> {
                   child: const Text('保存済み画像'),
                 ),
               ],
+            ),
+            TagSelector(
+              initialSuggestedTags:suggestedTags,
+              onChanged: (tags) {
+                setState(() {
+                    _selectedTags = tags;
+                });
+              },
             ),
             const SizedBox(height: 8),
             ElevatedButton(

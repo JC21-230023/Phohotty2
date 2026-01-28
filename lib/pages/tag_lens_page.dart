@@ -106,28 +106,7 @@ class _TagLensPageState extends State<TagLensPage> {
       });
     }
   }
-/*
-  // ===============================
-  // カスタムタグ追加//taglist_widgetへ移動
-  // ===============================
-  void addCustomTag() {
-    final tag = customTagController.text.trim();
-    if (tag.isEmpty) return;
 
-    if (selectedTags.contains(tag)) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('すでに存在するタグです')),
-      );
-      return;
-    }
-
-    setState(() {
-      customTags.add(tag);
-      selectedTags.add(tag);
-      customTagController.clear();
-    });
-  }
-*/
   // ===============================
   // 保存処理(fbStore:tag,fbStorage:image)
   // ===============================
@@ -229,102 +208,6 @@ class _TagLensPageState extends State<TagLensPage> {
                     )             
                  ]              
               ),
-
-              /*/＝＝＝＝旧タグリストここから＝＝＝＝
-              child: 
-               ListView(
-                children: [
-                  // 画像選択
-                  InkWell(
-                    onTap: pickImage,
-                    child: Container(
-                      height: 220,
-                      decoration: BoxDecoration(
-                        color: Colors.blue.shade50,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: Colors.blue.shade200),
-                      ),
-                      child: imageBytes == null
-                          ? const Center(
-                              child: Text('クリックして画像を選択'),//v2：更新の確認
-                            )
-                          : Image.memory(imageBytes!, fit: BoxFit.cover),
-                    ),
-                  ),
-
-                  const SizedBox(height: 24),
-
-                  const Text(
-                    'タグ候補',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 12),
-
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: [
-                      ...suggestedTags.map(
-                        (tag) => TagChip(
-                          label: tag,
-                          selected: selectedTags.contains(tag),
-                          onTap: () {
-                            setState(() {
-                              selectedTags.contains(tag)
-                                  ? selectedTags.remove(tag)
-                                  : selectedTags.add(tag);
-                            });
-                          },
-                        ),
-                      ),
-                      ...customTags.map(
-                        (tag) => TagChip(
-                          label: tag,
-                          custom: true,
-                          selected: selectedTags.contains(tag),
-                          onTap: () {
-                            setState(() {
-                              selectedTags.contains(tag)
-                                  ? selectedTags.remove(tag)
-                                  : selectedTags.add(tag);
-                            });
-                          },
-                        ),
-                      ),
-                    ],
-                  ),
-
-                  const SizedBox(height: 20),
-
-                  // カスタムタグ
-                  Row(
-                    children: [
-                      Expanded(
-                        child: TextField(
-                          controller: customTagController,
-                          decoration: const InputDecoration(
-                            hintText: 'カスタムタグを追加',
-                          ),
-                          onSubmitted: (_) => addCustomTag(),
-                        ),
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.add),
-                        onPressed: addCustomTag,
-                      )//タグを追加
-                    ],
-                  ),
-
-                  const SizedBox(height: 24),
-
-                  ElevatedButton.icon(
-                    icon: const Icon(Icons.save),
-                    label: const Text('保存'),
-                    onPressed: saveImage,
-                  )
-                ],
-              ),///＝＝＝＝旧タグリストここまで＝＝＝＝*/
-
             ),
     );
   }

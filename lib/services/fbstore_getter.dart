@@ -9,7 +9,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 /// フィールドが存在しない場合やドキュメントが存在しない場合は null を返します。
 /// エラーが発生した場合は例外をスローします。
 
-Future<dynamic> getTagListAsField({
+Future<List<String>> getTagListAsField({
    required String userId,
   required String imageName,
 }) async {
@@ -26,7 +26,7 @@ Future<dynamic> getTagListAsField({
     if (imageDoc.exists && imageDoc.data() != null) {
       Map<String, dynamic> data = imageDoc.data() as Map<String, dynamic>;
       if (data.containsKey('tagList')) {
-        return data['tagList']; // 'taglist' フィールドの値を返します
+        return List<String>.from(data['tagList']); //
       } else {
         print('画像ドキュメント "$imageName" に "tagList" フィールドが見つかりませんでした。');
         return  ["tagなし","tagListが不在"];

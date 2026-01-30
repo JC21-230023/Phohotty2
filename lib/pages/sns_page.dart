@@ -265,19 +265,6 @@ class _SnsPageState extends State<SnsPage> {
             ),
 
             const SizedBox(height: 16),
-           /* Row(
-              children: [
-                ElevatedButton(
-                  onPressed: _pickImageFromDevice,
-                  child: const Text('端末から選択'),
-                ),
-                const SizedBox(width: 8),
-                ElevatedButton(
-                  onPressed: _pickImageFromFirebaseStorage,
-                  child: const Text('保存済み画像'),
-                ),
-              ],
-            ),*/
             TagSelector(
               initialSuggestedTags:suggestedTags,
               onChanged: (tags) {

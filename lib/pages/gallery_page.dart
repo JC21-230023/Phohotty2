@@ -8,6 +8,7 @@ class GalleryPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final local = LocalStorageService();
+   // final fbGallery= 
 
     return Scaffold(
       appBar: AppBar(title: const Text("ギャラリー")),
@@ -56,10 +57,12 @@ class GalleryPage extends StatelessWidget {
       ),
       itemCount: items.length,
       itemBuilder: (context, index) {
+        print("Building item $index");
         final item = items[index];
         final filePath = item["path"];
         final tags = (item["tags"] as List).join(", ");
 
+         print("File path: $filePath, Tags: $tags");
         return GridTile(
           footer: GridTileBar(
             backgroundColor: Colors.black45,
@@ -70,7 +73,8 @@ class GalleryPage extends StatelessWidget {
               style: const TextStyle(fontSize: 12),
             ),
           ),
-          child: Image.file(File(filePath), fit: BoxFit.cover),
+         // child: Image.file(File(filePath), fit: BoxFit.cover),
+          child:Image.network(item["path"], fit: BoxFit.cover),
         );
       },
     );

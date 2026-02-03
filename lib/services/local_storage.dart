@@ -30,7 +30,7 @@ class LocalStorageService {
 
     final item = {
       "id": uuid.v4(),
-      "path": imagePath,
+      "path": imagePath,//fbのダウンロードURL
       "tags": tags,
       "created": DateTime.now().toIso8601String(),
     };

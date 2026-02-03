@@ -241,7 +241,7 @@ class _SnsPageState extends State<SnsPage> {
         child: Column(
           children: [
            InkWell(
-            onTap: (){},
+            onTap: _pickImageFromFirebaseStorage,//(){},
             child: Container(
                 height: 220,
                 decoration: BoxDecoration(
@@ -255,7 +255,7 @@ class _SnsPageState extends State<SnsPage> {
                 Image.file(_imageFile!):
                 _selectedImageUrl != null ?
                   Image.network(_selectedImageUrl!):
-                const Center(child: Text('クリックして画像を選択'),)
+                const Center(child: Text('クリックして保存済み画像から選択'),)
              ),
           ),
             const SizedBox(height: 8),
@@ -265,19 +265,6 @@ class _SnsPageState extends State<SnsPage> {
             ),
 
             const SizedBox(height: 16),
-            Row(
-              children: [
-                ElevatedButton(
-                  onPressed: _pickImageFromDevice,
-                  child: const Text('端末から選択'),
-                ),
-                const SizedBox(width: 8),
-                ElevatedButton(
-                  onPressed: _pickImageFromFirebaseStorage,
-                  child: const Text('保存済み画像'),
-                ),
-              ],
-            ),
             TagSelector(
               initialSuggestedTags:suggestedTags,
               onChanged: (tags) {

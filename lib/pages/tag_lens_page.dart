@@ -14,6 +14,7 @@ import '../services/local_storage.dart';
 import '../services/fb_auth.dart';
 import '../services/tag_image_saver.dart';
 import '../widgets/taglist_widget.dart';//タグを扱う
+import '../pages/gallery_page.dart';
 
 class TagLensPage extends StatefulWidget {
   const TagLensPage({super.key});
@@ -165,9 +166,18 @@ class _TagLensPageState extends State<TagLensPage> {
         centerTitle: true,
         actions: [
           TextButton(
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => GalleryPage()),
+              );
+            },
+            child: Text('ギャラリー'),
+          ),
+          /*TextButton(
             onPressed: () => Navigator.pushNamed(context, '/gallery'),
             child: const Text('ギャラリー'),
-          )
+          )*/
         ],
       ),
       body: loading

@@ -83,35 +83,42 @@ class _MapPageState extends State<MapPage> {
     }
 
     return Scaffold(
-      appBar: AppBar(title: const Text("画像MAP_SNS!")),
-
-      body:  Column(
-      children: [ 
-        SizedBox( height: 56, // 好みで 52〜64 あたり
-        child: SearchInputBar(
-            onSubmit:(query) {              
-              string2markers(query).then((markers) {
-                setState(() {
-                  _markers
-                    ..clear()
-                    ..addAll(markers);
+      appBar:AppBar(title: const Text("画像MAP_SNS!"),
+        actions: [ 
+          IconButton(
+              icon: const Icon(Icons.refresh),
+              tooltip: 'reload',
+              onPressed: _loadPostMarkers,
+            ),
+          ],
+      ),
+      body: Column(
+        children: [ 
+          SizedBox( height: 56, // 好みで 52〜64 あたり
+            child: SearchInputBar(
+              onSubmit:(query) {              
+                string2markers(query).then((markers) {
+                  setState(() {
+                    _markers
+                      ..clear()
+                      ..addAll(markers);
+                  });
                 });
-              });
               },
+            ),
           ),
-        ),
-
-        Expanded(
-          child:GoogleMap(
-            initialCameraPosition: _initialCameraPosition!,
-            myLocationEnabled: true, // 青い現在地マーカー
-            myLocationButtonEnabled: true,
-            onMapCreated: (controller) {
-              mapController = controller;
-            },
-            markers: _markers,
-          )
-        ),
+         
+          Expanded(
+            child:GoogleMap(
+              initialCameraPosition: _initialCameraPosition!,
+              myLocationEnabled: true, // 青い現在地マーカー
+              myLocationButtonEnabled: true,
+              onMapCreated: (controller) {
+                mapController = controller;
+              },
+              markers: _markers,
+            )
+          ),
       ]
       )
     );

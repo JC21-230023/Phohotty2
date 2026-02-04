@@ -36,10 +36,6 @@ class _SnsPageState extends State<SnsPage> {
         _imageFile = File(pickedFile.path);
         _selectedImageUrl = null;
         _selectedImageName = null;
-/*selectedTags,suggestedTagsのリセット
-        suggestedTags = [];
-        _selectedTags = {};
-*/
       });
     }
   }
@@ -71,16 +67,7 @@ class _SnsPageState extends State<SnsPage> {
       if (mounted) {
         _showImageSelectionBottomSheet(imageList);
       }
-      /* if(_selectedImageName != null){
-         print("newTags__ImageName: $_selectedImageName");
-        List<String> newTags = await getTagListAsField(
-                            userId: FbAuth.instance.currentUser!.uid,
-                            imageName: _selectedImageName??"選択されていない");
-        setState(() {//setState(() async{…　不可
-          suggestedTags = newTags;
-          _selectedTags = suggestedTags.toSet();
-        });
-      }*/
+      
 
     } catch (e) {
       debugPrint('FirebaseStorage読み込み失敗: $e');

@@ -4,7 +4,7 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:phototty/services/post_fillter.dart';
 import 'package:phototty/services/post_marker.dart';
-//import 'package:phototty/services/post_marker.dart';
+import 'package:phototty/services/others.dart';
 import 'package:phototty/widgets/search_input_widget.dart';
 
 class MapPage extends StatefulWidget {
@@ -20,12 +20,107 @@ class _MapPageState extends State<MapPage> {
   //**追加****
     final Set<Marker> _markers = {};
 
-
   @override
   void initState() {
     super.initState();
     _setCurrentLocation();
     _loadPostMarkers();
+  }
+  void _showImageSelectionBottomSheet({
+      required String docId, required String title,
+       required String imageUrl, required String tagList}){
+    showModalBottomSheet(context: context, builder:(BuildContext context) {
+        /*return  Card(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: imageUrl.isNotEmpty
+                    ? Image.network(
+                        imageUrl,
+                        width: 50,
+                        height: 50,
+                        fit: BoxFit.cover,
+                      )
+                    : const Icon(Icons.image_not_supported),
+                title: Text(title),
+                subtitle: Text(tagList),
+              ),
+            ],
+          ),
+        );*/
+        
+       return Card(
+  margin: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+  elevation: 6,
+  shape: RoundedRectangleBorder(
+    borderRadius: BorderRadius.circular(20),
+  ),
+  child: Padding(
+    padding: const EdgeInsets.all(16),
+    child: Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        // タイトル
+        Text(
+          title,
+          textAlign: TextAlign.center,
+          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+        ),
+        const SizedBox(height: 16),
+
+        // 画像枠
+        Container(
+          height: 220, // ← 画像の高さ（好みで調整）
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: Colors.black26, width: 1),
+            color: Colors.grey.shade100,
+          ),
+          clipBehavior: Clip.antiAlias, // 角丸を画像にも効かせる
+          child: imageUrl.isNotEmpty
+              ? Image.network(
+                  imageUrl,
+                  fit: BoxFit.cover,
+                  // 読み込み中
+                  loadingBuilder: (context, child, progress) {
+                    if (progress == null) return child;
+                    return const Center(child: CircularProgressIndicator());
+                  },
+                  // エラー時
+                  errorBuilder: (_, __, ___) => const Center(
+                    child: Icon(Icons.broken_image, size: 48, color: Colors.black45),
+                  ),
+                )
+              : const Center(
+                  child: Icon(Icons.image_not_supported, size: 48, color: Colors.black45),
+                ),
+        ),
+        const SizedBox(height: 16),
+
+        // tagList 枠
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: Colors.black26, width: 1),
+            color: Colors.white,
+          ),
+          child: Text(
+            tagList,
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.bodyMedium,
+          ),
+        ),
+      ],
+    ),
+  ),
+);
+
+    });
   }
 
   Future<void> _setCurrentLocation() async {
@@ -59,12 +154,13 @@ class _MapPageState extends State<MapPage> {
       );
     });
   }
+
   //==========追加=======
     Set<Marker> postMarker() => _markers;
-    //========
-    
     Future<void> _loadPostMarkers() async {
-      final Set<Marker> tmp = await getPostMarkers();
+      final Set<Marker> tmp = await getPostMarkers(_showImageSelectionBottomSheet);
+      //infoTapCallBackを作成して引数に
+
       setState(() {
         _markers
           ..clear()
@@ -72,8 +168,7 @@ class _MapPageState extends State<MapPage> {
       });
     }
 
-  //====================
-
+//====================
   @override
   Widget build(BuildContext context) {
     if (_initialCameraPosition == null) {
@@ -96,8 +191,10 @@ class _MapPageState extends State<MapPage> {
         children: [ 
           SizedBox( height: 56, // 好みで 52〜64 あたり
             child: SearchInputBar(
-              onSubmit:(query) {              
-                string2markers(query).then((markers) {
+              onSubmit:(query) {
+                            //↓infoTapCallBackを引数に              
+                //string2markers(query,detailViewFunc).then((markers) {
+                string2markers(query,_showImageSelectionBottomSheet).then((markers) {
                   setState(() {
                     _markers
                       ..clear()

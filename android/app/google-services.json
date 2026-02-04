@@ -9,7 +9,7 @@
       "client_info": {
         "mobilesdk_app_id": "1:404083870658:android:c2c5ecf22a4bd5bdf7a45b",
         "android_client_info": {
-          "package_name": "com.example.phototty"
+          "package_name": "jp.ac.jc21.Phohotty2"
         }
       },
       "oauth_client": [
@@ -17,7 +17,7 @@
           "client_id": "404083870658-5ttp28nlsjo8j25p1aa7g7v37k34l9ri.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
-            "package_name": "com.example.phototty",
+            "package_name": "jp.ac.jc21.Phohotty2",
             "certificate_hash": "97e7aed68b784e3a75b802f549ad42b19563a0dd"
           }
         },

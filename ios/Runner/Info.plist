@@ -60,5 +60,16 @@
 	<string>位置情報に基づいた機能を提供するために、位置情報へのアクセスが必要です。</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
 	<string>位置情報に基づいた機能を提供するために、位置情報へのアクセスが必要です。</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.googleusercontent.apps.404083870658-1ar0mt7qfafj71cj6bjip53fmdqk7oni</string>
+			</array>
+		</dict>
+	</array>
 </dict>
 </plist>

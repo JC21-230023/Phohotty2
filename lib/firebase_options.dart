@@ -58,11 +58,11 @@ class DefaultFirebaseOptions {
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyAZp3iczBrBc6eHHxr_5BGCd9YGLRwcBC0',
+    apiKey: 'AIzaSyBcEu1l3duAyE8Yp_SNxYQbcpNSZyBCuMA',
     appId: '1:404083870658:ios:c57c33add2d71b6cf7a45b',
     messagingSenderId: '404083870658',
     projectId: 'phototty-885dd',
     storageBucket: 'phototty-885dd.firebasestorage.app',
-    iosBundleId: 'com.example.phototty',
+    iosBundleId: 'jp.ac.jc21.Phohotty2',
   );
 }

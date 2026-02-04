@@ -7,7 +7,7 @@ plugins {
 }
 
 android {
-    namespace = "com.example.phototty"
+    namespace = "jp.ac.jc21.Phohotty2"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 

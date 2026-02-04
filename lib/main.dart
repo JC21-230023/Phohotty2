@@ -9,22 +9,45 @@ import 'services/fb_auth.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await dotenv.load(fileName: '.env');
+
+  // Load .env file (fail gracefully if not found)
+  try {
+    await dotenv.load(fileName: '.env');
+  } catch (e) {
+    debugPrint('Warning: .env file not found - $e');
+  }
 
   // Initialize Firebase before using any Firebase services
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
-  // Request storage permission at startup
-  final PermissionState ps = await PhotoManager.requestPermissionExtend();
-  debugPrint('Permission status: $ps');
-
   runApp(const MyApp());
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  @override
+  void initState() {
+    super.initState();
+    // Request storage permission after app is fully initialized
+    _requestPermissions();
+  }
+
+  Future<void> _requestPermissions() async {
+    try {
+      final PermissionState ps = await PhotoManager.requestPermissionExtend();
+      debugPrint('Permission status: $ps');
+    } catch (e) {
+      debugPrint('Permission request failed: $e');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {

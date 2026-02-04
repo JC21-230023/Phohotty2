@@ -3,15 +3,17 @@ import 'package:flutter/widgets.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:phototty/services/post_marker.dart' ;
+import 'package:phototty/services/others.dart';
 
-Future<Set<Marker>> string2markers(String query) async {
+
+Future<Set<Marker>> string2markers(String query,InfoTapCallback view) async {
   final tags = query
       .trim()
       .split(RegExp(r'[\s\u3000]+'))
       .where((e) => e.isNotEmpty)
       .toList();
   final snap = await _post_filler(tags, limit: 2);
-  final markers = await doc2Marksers(snap);
+  final markers = await doc2Marksers(snap, onInfoWindowTap:view);
 
   debugPrint("str2mrk:");
   return markers;

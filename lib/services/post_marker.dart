@@ -4,22 +4,29 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'dart:ui' as ui;
 import 'package:http/http.dart' as http;
+import 'package:phototty/services/others.dart';
+//infoTapCallBack取り込み
 
-Future<Set<Marker>> getPostMarkers() async {
+Future<Set<Marker>> getPostMarkers(InfoTapCallback view) async {
   //final Set<Marker> markers = {};
   final snap = await FirebaseFirestore.instance.collection('posts').get();
- final Set<Marker> markers=await doc2Marksers(snap);
+ final Set<Marker> markers=await doc2Marksers(snap, onInfoWindowTap: view);
   return markers; 
 }
 
-
-Future<Set<Marker>> doc2Marksers(QuerySnapshot<Map<String, dynamic>> snap)async{
+/*
+Future<Set<Marker>> doc2Marksers(
+  QuerySnapshot<Map<String, dynamic>> snap,)async{
   final Set<Marker> ans={};
+
+
     for (var doc in snap.docs) {
       final data = doc.data();
       final GeoPoint geoPoint = data['location'];
       final String title = data['description'] ?? 'No Title';
       final String imageUrl = data['imageUrl'] ;
+      final String tagList =data['postTagList'] != null ? 
+        (data['postTagList'] as List).join(', ') : 'No Tags';
 
     // 画像アイコン（imageUrl が空なら標準ピン）
     final BitmapDescriptor icon = imageUrl.isEmpty
@@ -28,14 +35,75 @@ Future<Set<Marker>> doc2Marksers(QuerySnapshot<Map<String, dynamic>> snap)async{
     final marker = Marker(
         markerId: MarkerId(doc.id),
         position: LatLng(geoPoint.latitude, geoPoint.longitude),
-        infoWindow: InfoWindow(title: title),
-        icon: icon);
+        infoWindow: InfoWindow(title: title,snippet: tagList,
+        onTap: () {
+          
+          }),
+        icon: icon,
+        onTap: () => { 
+          print("マーカーがタップされた") 
+        },
+       
+    );
       ans.add(marker);
     }
        return ans;
+}*/
+
+Future<Set<Marker>> doc2Marksers(
+  QuerySnapshot<Map<String, dynamic>> snap, {
+  required void Function({
+    required String docId,
+    required String title,
+    required String imageUrl,
+    required String tagList,
+  }) onInfoWindowTap,
+}) async {
+  final Set<Marker> ans = {};
+
+  for (var doc in snap.docs) {
+    final data = doc.data();
+    final GeoPoint geoPoint = data['location'] as GeoPoint;
+
+    final String title = (data['description'] ?? 'No Title') as String;
+    final String imageUrl = (data['imageUrl'] ?? '') as String;
+
+    final String tagList = data['postTagList'] != null
+        ? (data['postTagList'] as List).join(', ')
+        : 'No Tags';
+
+    final BitmapDescriptor icon = imageUrl.isEmpty
+        ? BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed)
+        : await _iconFromImageUrl(imageUrl, size: 96, borderWidth: 4);
+
+    final marker = Marker(
+      markerId: MarkerId(doc.id),
+      position: LatLng(geoPoint.latitude, geoPoint.longitude),
+      icon: icon,
+
+      infoWindow: InfoWindow(
+        title: title,
+        snippet: tagList,
+        onTap: () {
+          onInfoWindowTap(
+            docId: doc.id,
+            title: title,
+            imageUrl: imageUrl,
+            tagList: tagList,
+          );
+        },
+      ),
+
+      onTap: () {
+        debugPrint("マーカーがタップされた: ${doc.id}");
+      },
+    );
+
+    ans.add(marker);
+  }
+
+  return ans;
 }
-
-
 
 ///gemiさん作
 

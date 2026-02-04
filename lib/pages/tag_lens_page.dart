@@ -3,11 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:firebase_storage/firebase_storage.dart';
-import 'dart:developer' as developer;//ログ用
-
-
-import '../widgets/tag_chip.dart';
 import '../services/google_vision.dart';
 import '../services/tag_translator.dart';
 import '../services/local_storage.dart';
@@ -28,7 +23,7 @@ class _TagLensPageState extends State<TagLensPage> {
 
   List<String> suggestedTags = [];
   Set<String> _selectedTags = {};//widgetのTagListから取得
-  //List<String> customTags = [];
+
 
   bool loading = false;
   String? errorMessage;
@@ -77,7 +72,6 @@ class _TagLensPageState extends State<TagLensPage> {
       imageBytes = bytes;
       suggestedTags.clear();
       _selectedTags.clear();
-      //customTags.clear();
       loading = true;
       errorMessage = null;
     });
@@ -112,10 +106,7 @@ class _TagLensPageState extends State<TagLensPage> {
   // 保存処理(fbStore:tag,fbStorage:image)
   // ===============================
   Future<void> saveImage() async {
-     developer.log('saveImage called');
-      
     if (imageBytes == null || _selectedTags.isEmpty) return;
-
     try {
       setState(() => loading = true);
 
@@ -174,10 +165,6 @@ class _TagLensPageState extends State<TagLensPage> {
             },
             child: Text('ギャラリー'),
           ),
-          /*TextButton(
-            onPressed: () => Navigator.pushNamed(context, '/gallery'),
-            child: const Text('ギャラリー'),
-          )*/
         ],
       ),
       body: loading
@@ -204,7 +191,6 @@ class _TagLensPageState extends State<TagLensPage> {
                     ),
                     TagSelector(
                       initialSuggestedTags:suggestedTags,//AIのタグ
-                        //["隔離テスト","初期タグ","画像選択追加"],
                       onChanged: (tags) {
                         setState(() {
                           _selectedTags = tags;

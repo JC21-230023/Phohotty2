@@ -1,4 +1,4 @@
-import 'dart:io';
+//import 'dart:io';//localの操作に移行するためコメントアウト
 import 'package:flutter/material.dart';
 import '../services/local_storage.dart';
 
@@ -8,7 +8,6 @@ class GalleryPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final local = LocalStorageService();
-   // final fbGallery= 
 
     return Scaffold(
       appBar: AppBar(title: const Text("ギャラリー")),
@@ -74,6 +73,7 @@ class GalleryPage extends StatelessWidget {
             ),
           ),
          // child: Image.file(File(filePath), fit: BoxFit.cover),
+         //↑　ローカル移行のため保持
           child:Image.network(item["path"], fit: BoxFit.cover),
         );
       },

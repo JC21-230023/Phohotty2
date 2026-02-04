@@ -14,42 +14,6 @@ Future<Set<Marker>> getPostMarkers(InfoTapCallback view) async {
   return markers; 
 }
 
-/*
-Future<Set<Marker>> doc2Marksers(
-  QuerySnapshot<Map<String, dynamic>> snap,)async{
-  final Set<Marker> ans={};
-
-
-    for (var doc in snap.docs) {
-      final data = doc.data();
-      final GeoPoint geoPoint = data['location'];
-      final String title = data['description'] ?? 'No Title';
-      final String imageUrl = data['imageUrl'] ;
-      final String tagList =data['postTagList'] != null ? 
-        (data['postTagList'] as List).join(', ') : 'No Tags';
-
-    // 画像アイコン（imageUrl が空なら標準ピン）
-    final BitmapDescriptor icon = imageUrl.isEmpty
-        ? BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed)
-        : await _iconFromImageUrl(imageUrl, size: 96, borderWidth: 4);
-    final marker = Marker(
-        markerId: MarkerId(doc.id),
-        position: LatLng(geoPoint.latitude, geoPoint.longitude),
-        infoWindow: InfoWindow(title: title,snippet: tagList,
-        onTap: () {
-          
-          }),
-        icon: icon,
-        onTap: () => { 
-          print("マーカーがタップされた") 
-        },
-       
-    );
-      ans.add(marker);
-    }
-       return ans;
-}*/
-
 Future<Set<Marker>> doc2Marksers(
   QuerySnapshot<Map<String, dynamic>> snap, {
   required void Function({

@@ -1,6 +1,6 @@
+/*ファイル１つ消すのは流石に怖い
+
 import 'package:flutter/material.dart';
-
-
 
 class PostCard extends StatefulWidget {
   const PostCard({
@@ -42,4 +42,4 @@ class _PostCardState extends State<PostCard> {
       ),
     );
   }
-}
+}*/

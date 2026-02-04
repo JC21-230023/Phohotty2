@@ -1,4 +1,4 @@
-package jp.ac.jc21.Phohotty2
+package com.example.phototty
 
 import io.flutter.embedding.android.FlutterActivity
 

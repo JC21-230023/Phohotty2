@@ -1,7 +1,6 @@
 import Flutter
 import UIKit
 import Firebase
-import GoogleSignIn
 
 @main
 @objc class AppDelegate: FlutterAppDelegate {
@@ -14,10 +13,9 @@ import GoogleSignIn
       FirebaseApp.configure()
     }
 
-    // Set Google Sign-In client ID from Firebase config (if available)
-    if let clientID = FirebaseApp.app()?.options.clientID {
-      GIDSignIn.sharedInstance.clientID = clientID
-    }
+    // Google Sign-In configuration is handled by the plugin / SDK at sign-in time.
+    // No direct assignment to `GIDSignIn.sharedInstance.clientID` (removed because
+    // newer GoogleSignIn SDKs no longer expose that property).
 
     GeneratedPluginRegistrant.register(with: self)
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)

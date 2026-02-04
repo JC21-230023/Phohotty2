@@ -63,6 +63,6 @@ class DefaultFirebaseOptions {
     messagingSenderId: '404083870658',
     projectId: 'phototty-885dd',
     storageBucket: 'phototty-885dd.firebasestorage.app',
-    iosBundleId: 'com.example.phototty',
+    iosBundleId: 'jp.ac.jc21.Phohotty2',
   );
 }

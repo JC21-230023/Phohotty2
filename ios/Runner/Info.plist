@@ -60,6 +60,8 @@
 	<string>位置情報に基づいた機能を提供するために、位置情報へのアクセスが必要です。</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
 	<string>位置情報に基づいた機能を提供するために、位置情報へのアクセスが必要です。</string>
+	<key>GIDClientID</key>
+	<string>404083870658-1ar0mt7qfafj71cj6bjip53fmdqk7oni.apps.googleusercontent.com</string>
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>

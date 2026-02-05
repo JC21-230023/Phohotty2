@@ -1,6 +1,7 @@
 import Flutter
 import UIKit
 import Firebase
+import GoogleSignIn
 
 @main
 @objc class AppDelegate: FlutterAppDelegate {
@@ -13,11 +14,16 @@ import Firebase
       FirebaseApp.configure()
     }
 
-    // Google Sign-In configuration is handled by the plugin / SDK at sign-in time.
-    // No direct assignment to `GIDSignIn.sharedInstance.clientID` (removed because
-    // newer GoogleSignIn SDKs no longer expose that property).
+    // // Google Sign-In configuration is handled by the plugin / SDK at sign-in time.
+    // // No direct assignment to `GIDSignIn.sharedInstance.clientID` (removed because
+    // // newer GoogleSignIn SDKs no longer expose that property).
 
     GeneratedPluginRegistrant.register(with: self)
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)
+  }
+
+  // Handle URL schemes for Google Sign-In
+  override func application(_ app: UIApplication, open url: URL, options: [UIApplication.OpenURLOptionsKey: Any] = [:]) -> Bool {
+    return GIDSignIn.sharedInstance.handle(url)
   }
 }

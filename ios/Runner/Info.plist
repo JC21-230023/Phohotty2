@@ -71,6 +71,12 @@
 			<array>
 				<string>com.googleusercontent.apps.404083870658-1ar0mt7qfafj71cj6bjip53fmdqk7oni</string>
 			</array>
+			<key>LSApplicationQueriesSchemes</key>
+			<array>
+			<string>google</string>
+			<string>com.google</string>
+			<string>com.googleusercontent.apps.404083870658-1ar0mt7qfafj71cj6bjip53fmdqk7oni</string>
+			</array>
 		</dict>
 	</array>
 </dict>

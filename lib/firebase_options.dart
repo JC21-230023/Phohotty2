@@ -59,7 +59,7 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions ios = FirebaseOptions(
     apiKey: 'AIzaSyBcEu1l3duAyE8Yp_SNxYQbcpNSZyBCuMA',
-    appId: '1:404083870658:ios:c57c33add2d71b6cf7a45b',
+    appId: '1:404083870658:ios:2abf59c25564dceff7a45b',
     messagingSenderId: '404083870658',
     projectId: 'phototty-885dd',
     storageBucket: 'phototty-885dd.firebasestorage.app',

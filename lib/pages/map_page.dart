@@ -154,7 +154,7 @@ class _MapPageState extends State<MapPage> {
     }
 
     return Scaffold(
-      appBar:AppBar(title: const Text("画像MAP_SNS!"),
+      appBar:AppBar(title: const Text("画像MAP_SNS"),
         actions: [ 
           IconButton(
               icon: const Icon(Icons.refresh),

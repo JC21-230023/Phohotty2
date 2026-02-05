@@ -1,7 +1,6 @@
 import Flutter
 import UIKit
 import Firebase
-import GoogleSignIn
 
 @main
 @objc class AppDelegate: FlutterAppDelegate {
@@ -24,6 +23,11 @@ import GoogleSignIn
 
   // Handle URL schemes for Google Sign-In
   override func application(_ app: UIApplication, open url: URL, options: [UIApplication.OpenURLOptionsKey: Any] = [:]) -> Bool {
-    return GIDSignIn.sharedInstance.handle(url)
+    if let gidSignIn = NSClassFromString("GIDSignIn") {
+      return (gidSignIn as! NSObjectProtocol).perform(Selector(("handleURL:")) with: url) != nil
+    }
+    return false
   }
 }
+
+```

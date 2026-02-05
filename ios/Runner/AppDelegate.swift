@@ -1,6 +1,7 @@
 import Flutter
 import UIKit
 import Firebase
+import GoogleSignIn // 追加
 
 @main
 @objc class AppDelegate: FlutterAppDelegate {
@@ -8,26 +9,21 @@ import Firebase
     _ application: UIApplication,
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
   ) -> Bool {
-    // Configure Firebase for native iOS usage
+    // Firebaseの設定
     if FirebaseApp.app() == nil {
       FirebaseApp.configure()
     }
-
-    // // Google Sign-In configuration is handled by the plugin / SDK at sign-in time.
-    // // No direct assignment to `GIDSignIn.sharedInstance.clientID` (removed because
-    // // newer GoogleSignIn SDKs no longer expose that property).
 
     GeneratedPluginRegistrant.register(with: self)
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)
   }
 
-  // Handle URL schemes for Google Sign-In
+  // Google Sign-InのURLスキーム処理を最新の書き方に修正
   override func application(_ app: UIApplication, open url: URL, options: [UIApplication.OpenURLOptionsKey: Any] = [:]) -> Bool {
-    if let gidSignIn = NSClassFromString("GIDSignIn") {
-      return (gidSignIn as! NSObjectProtocol).perform(Selector(("handleURL:")) with: url) != nil
+    // GIDSignInを使用してURLを処理
+    if GIDSignIn.sharedInstance.handle(url) {
+      return true
     }
-    return false
+    return super.application(app, open: url, options: options)
   }
 }
-
-```

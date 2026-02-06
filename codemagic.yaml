@@ -3,23 +3,19 @@ workflows:
     name: Release (Tag -> Store)
     max_build_duration: 90
     instance_type: mac_mini_m1
-    # --- 修正箇所：特定の名前を指定せず、利用可能な連携を有効にする ---
     integrations:
-      app_store_connect: IOSAPP_TEAM_E # または Codemagic画面で設定した実際の「名前」
-    # -----------------------------------------------------------
+      app_store_connect: IOSAPP_TEAM_E
     environment:
       groups:
         - ios_credentials
-        # - android_credentials
-        # - notifications
       vars:
         FLUTTER_CHANNEL: "stable"
         APP_ENV: "prod"
         DART_DEFINES: "ENV=prod"
         ANDROID_FLAVOR: "prod"
-      flutter: latest
-      xcode: latest
-      cocoapods: latest
+      flutter: "3.24.0"
+      xcode: "16.0"      # Xcode 16を指定
+      cocoapods: "1.15.2" # latestではなく数字を指定（1.15.2以上を推奨）
     triggering:
       events:
         - tag
@@ -30,9 +26,6 @@ workflows:
       - name: Set up GoogleService-Info.plist
         script: |
           echo "$GOOGLE_SERVICE_INFO_IOS" > ios/Runner/GoogleService-Info.plist
-      - name: Prepare secrets (Android keystore)
-        script: |
-          echo $CM_KEYSTORE | base64 --decode > android/keystores/release.keystore
       - name: Flutter deps
         script: |
           flutter pub get
@@ -40,14 +33,10 @@ workflows:
       - name: Tests
         script: |
           flutter test
-      - name: Build Android App Bundle
-        script: |
-          flutter build appbundle \
-            --release \
-            --flavor ${ANDROID_FLAVOR} \
-            --build-name=1.4.0 \
-            --build-number=${BUILD_NUMBER} \
-            --dart-define=${DART_DEFINES}
+      # Androidビルドを完全にスキップしたい場合は、ここからBuild iOS IPAまでを削除またはコメントアウト
+      # - name: Build Android App Bundle
+      #   script: |
+      #     flutter build appbundle --release --flavor ${ANDROID_FLAVOR} --build-name=1.4.0 --build-number=${BUILD_NUMBER} --dart-define=${DART_DEFINES}
       - name: Build iOS IPA
         script: |
           flutter build ipa \
@@ -60,16 +49,18 @@ workflows:
         script: |
           find build/ios/archive -name "*.dSYM" | xcode-project upload-dsyms --app-id "$FIREBASE_APP_ID_IOS"
     artifacts:
-      - build/app/outputs/**/*.aab
+      # Androidの成果物もコメントアウト
+      # - build/app/outputs/**/*.aab
       - build/ios/ipa/*.ipa
       - build/ios/archive/*.xcarchive
     publishing:
       app_store_connect:
         auth: integration 
         submit_to_testflight: true
-      #google_play:
-      #  credentials: $GOOGLE_PLAY_SERVICE_ACCOUNT
-      #  track: internal
+      # Google Playへの配信をコメントアウト
+      # google_play:
+      #   credentials: $GOOGLE_PLAY_SERVICE_ACCOUNT
+      #   track: internal
       slack:
         channel: "#ci-notify"
         notify:

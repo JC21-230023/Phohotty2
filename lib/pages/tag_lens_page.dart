@@ -5,7 +5,6 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../services/google_vision.dart';
 import '../services/tag_translator.dart';
-import '../services/local_storage.dart';
 import '../services/fb_auth.dart';
 import '../services/tag_image_saver.dart';
 import '../widgets/taglist_widget.dart';//タグを扱う
@@ -32,7 +31,8 @@ class _TagLensPageState extends State<TagLensPage> {
   final picker = ImagePicker();
   final customTagController = TextEditingController();
 
-  late final GoogleVisionService vision;
+  GoogleVisionService? vision;
+  bool _visionInitialized = false;
   //final local = LocalStorageService();
 
   @override
@@ -42,15 +42,29 @@ class _TagLensPageState extends State<TagLensPage> {
   }
 
   Future<void> _loadSettings() async {
-    final prefs = await SharedPreferences.getInstance();
-    final apiKey = dotenv.env['GOOGLE_VISION_API_KEY'] ?? '';
-    setState(() {
-      aiEnabled = prefs.getBool('aiTaggingEnabled') ?? true;
-      if (apiKey.isEmpty) {
-        errorMessage = 'Google Vision API キーが設定されていません';
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final apiKey = dotenv.env['GOOGLE_VISION_API_KEY'] ?? '';
+      
+      if (mounted) {
+        setState(() {
+          aiEnabled = prefs.getBool('aiTaggingEnabled') ?? true;
+          if (apiKey.isEmpty) {
+            errorMessage = 'Google Vision API キーが設定されていません';
+          } else {
+            vision = GoogleVisionService(apiKey: apiKey);
+            _visionInitialized = true;
+          }
+        });
       }
-    });
-    vision = GoogleVisionService(apiKey: apiKey);
+    } catch (e) {
+      debugPrint('Error loading settings: $e');
+      if (mounted) {
+        setState(() {
+          errorMessage = '設定読み込みエラー: $e';
+        });
+      }
+    }
   }
 
   @override
@@ -68,6 +82,7 @@ class _TagLensPageState extends State<TagLensPage> {
 
     final bytes = await picked.readAsBytes();
 
+    if (!mounted) return;
     setState(() {
       imageBytes = bytes;
       suggestedTags.clear();
@@ -76,28 +91,59 @@ class _TagLensPageState extends State<TagLensPage> {
       errorMessage = null;
     });
 
-    if (aiEnabled) {
+    if (aiEnabled && _visionInitialized && vision != null) {
       try {
         // ① AIで英語タグ取得
-        final labels = await vision.analyzeLabels(bytes);
+        final labels = await vision!.analyzeLabels(bytes);
+        
+        if (labels.isEmpty) {
+          debugPrint('Vision API returned null or empty labels');
+          if (!mounted) return;
+          setState(() {
+            loading = false;
+            suggestedTags = [];
+            _selectedTags.clear();
+          });
+          return;
+        }
 
         // 辞書登録込みで日本語化
-        final jaTags =
-          await TagTranslator.toJapaneseSmartList(labels);
+        final jaTags = await TagTranslator.toJapaneseSmartList(labels);
+        
+        if (jaTags?.isEmpty ?? true) {
+          debugPrint('TagTranslator returned null or empty list');
+          if (!mounted) return;
+          setState(() {
+            loading = false;
+            suggestedTags = labels; // フォールバック：英語タグを使用
+            _selectedTags = labels.toSet();
+          });
+          return;
+        }
+        
+        if (!mounted) return;
         setState(() {
-          suggestedTags = jaTags;
-          _selectedTags = jaTags.toSet();
+          suggestedTags = jaTags ?? [];
+          _selectedTags = (jaTags ?? []).toSet();
           loading = false;
         });
       } catch (e) {
+        debugPrint('Tag analysis error: $e');
+        if (!mounted) return;
         setState(() {
           loading = false;
           errorMessage = 'タグ解析エラー: $e';
         });
       }
     } else {
+      if (!mounted) return;
       setState(() {
         loading = false;
+        if (!aiEnabled) {
+          errorMessage = 'AI タグ機能が無効です';
+        } else if (!_visionInitialized) {
+          errorMessage = 'Google Vision サービスが初期化されていません';
+        }
       });
     }
   }
@@ -106,24 +152,45 @@ class _TagLensPageState extends State<TagLensPage> {
   // 保存処理(fbStore:tag,fbStorage:image)
   // ===============================
   Future<void> saveImage() async {
-    if (imageBytes == null || _selectedTags.isEmpty) return;
+    if (imageBytes == null || _selectedTags.isEmpty) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('画像とタグを選択してください')),
+        );
+      }
+      return;
+    }
+    
     try {
+      if (!mounted) return;
       setState(() => loading = true);
 
       final user = FbAuth.instance.currentUser;
       if (user == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('ログインしてください')),
-        );
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('ログインしてください')),
+          );
+        }
         return;
       }
 
       final uid = user.uid;
+      final bytes = imageBytes;
+      
+      if (bytes == null) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('画像データが失われました')),
+          );
+        }
+        return;
+      }
       
       // TagImageSaver で処理を統一
-      await TagImageSaver.saveImageWithTags(//
-        imageBytes: imageBytes!,
-        tags: _selectedTags.toList(),//(widgetの)tagList.selectedTagsに
+      await TagImageSaver.saveImageWithTags(
+        imageBytes: bytes,
+        tags: _selectedTags.toList(),
         uid: uid,
       );
 
@@ -136,13 +203,20 @@ class _TagLensPageState extends State<TagLensPage> {
         ),
       );
 
-      Navigator.pushNamed(context, '/gallery');
+      if (mounted) {
+        Navigator.pushNamed(context, '/gallery');
+      }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('保存エラー: $e')),
-      );
+      debugPrint('Save image error: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('保存エラー: $e')),
+        );
+      }
     } finally {
-      setState(() => loading = false);
+      if (mounted) {
+        setState(() => loading = false);
+      }
     }
   }
 
@@ -151,6 +225,7 @@ class _TagLensPageState extends State<TagLensPage> {
   // ===============================
   @override
   Widget build(BuildContext context) {
+    final currentImage = imageBytes;
     return Scaffold(
       appBar: AppBar(
         title: const Text('ふぉとってぃ'),
@@ -182,11 +257,11 @@ class _TagLensPageState extends State<TagLensPage> {
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(color: Colors.blue.shade200),
                         ),
-                        child: imageBytes == null
+                        child: currentImage == null
                             ? const Center(
                                 child: Text('クリックして画像を選択'),//v2：更新の確認
                               )
-                            : Image.memory(imageBytes!, fit: BoxFit.cover),
+                            : Image.memory(currentImage, fit: BoxFit.cover),
                       ),
                     ),
                     TagSelector(

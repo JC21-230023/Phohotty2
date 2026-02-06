@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:flutter/material.dart';
 
 class FbUser {
 	final String uid;
@@ -35,7 +36,15 @@ class FbAuth {
 	final GoogleSignIn _googleSignIn = GoogleSignIn();
 
 	Stream<FbUser?> get authStateChanges =>
-			_auth.authStateChanges().map((u) => u == null ? null : FbUser.fromFirebaseUser(u));
+			_auth.authStateChanges().map((u) {
+		try {
+			if (u == null) return null;
+			return FbUser.fromFirebaseUser(u);
+		} catch (e) {
+			debugPrint('Error converting Firebase User to FbUser: $e');
+			rethrow;
+		}
+	});
 
 	FbUser? get currentUser =>
 			_auth.currentUser == null ? null : FbUser.fromFirebaseUser(_auth.currentUser!);
@@ -43,20 +52,37 @@ class FbAuth {
 	Future<FbUser?> signInWithGoogle() async {
 		try {
 			final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
-			if (googleUser == null) return null; // ユーザーがサインインをキャンセル
+			if (googleUser == null) {
+				debugPrint('Google Sign In was cancelled by user');
+				return null; // ユーザーがサインインをキャンセル
+			}
 
-			final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+			try {
+				final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+				
+				if (googleAuth.accessToken == null || googleAuth.idToken == null) {
+					debugPrint('Google authentication tokens are null');
+					return null;
+				}
 
-			final credential = GoogleAuthProvider.credential(
-				accessToken: googleAuth.accessToken,
-				idToken: googleAuth.idToken,
-			);
+				final credential = GoogleAuthProvider.credential(
+					accessToken: googleAuth.accessToken,
+					idToken: googleAuth.idToken,
+				);
 
-			final UserCredential userCredential = await _auth.signInWithCredential(credential);
-			final user = userCredential.user;
-			if (user == null) return null;
-			return FbUser.fromFirebaseUser(user);
+				final UserCredential userCredential = await _auth.signInWithCredential(credential);
+				final user = userCredential.user;
+				if (user == null) {
+					debugPrint('Firebase user is null after sign in');
+					return null;
+				}
+				return FbUser.fromFirebaseUser(user);
+			} catch (authError) {
+				debugPrint('Google authentication error: $authError');
+				rethrow;
+			}
 		} catch (e) {
+			debugPrint('Google Sign In error: $e');
 			rethrow;
 		}
 	}

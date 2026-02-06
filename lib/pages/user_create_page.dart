@@ -45,9 +45,15 @@ class _UserCreatePageState extends State<UserCreatePage> {
       String msg = 'ユーザー作成に失敗しました';
       if (e.code == 'email-already-in-use') msg = 'そのメールアドレスは既に使用されています。';
       if (e.code == 'weak-password') msg = 'パスワードが短すぎます（6文字以上）。';
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+      debugPrint('Firebase auth error: ${e.code}');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+      }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('エラー: $e')));
+      debugPrint('Create account error: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('エラー: $e')));
+      }
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -58,13 +64,18 @@ class _UserCreatePageState extends State<UserCreatePage> {
     try {
       final user = await FbAuth.instance.signInWithGoogle();
       if (user == null) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Google サインインがキャンセルされました')));
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Google サインインがキャンセルされました')));
+        }
         return;
       }
       // Google でサインインすると Firebase 側にユーザーが作成されます。
       if (mounted) Navigator.of(context).pop();
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Google サインイン失敗: $e')));
+      debugPrint('Google sign in error: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Google サインイン失敗: $e')));
+      }
     } finally {
       if (mounted) setState(() => _platformLoading = false);
     }

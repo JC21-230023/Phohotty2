@@ -134,8 +134,25 @@ class _SnsPageState extends State<SnsPage> {
                         child: Image.network(
                           image.downloadUrl,
                           fit: BoxFit.cover,
+                          loadingBuilder: (context, child, loadingProgress) {
+                            if (loadingProgress == null) return child;
+                            return Center(
+                              child: CircularProgressIndicator(
+                                value: loadingProgress.expectedTotalBytes != null
+                                    ? loadingProgress.cumulativeBytesLoaded /
+                                        loadingProgress.expectedTotalBytes!
+                                    : null,
+                              ),
+                            );
+                          },
                           errorBuilder: (context, error, stackTrace) {
-                            return const Center(child: Icon(Icons.error));
+                            debugPrint('Image load error in sns_page: $error');
+                            return Container(
+                              color: Colors.grey[300],
+                              child: const Center(
+                                child: Icon(Icons.broken_image, color: Colors.grey),
+                              ),
+                            );
                           },
                         ),
                       ),

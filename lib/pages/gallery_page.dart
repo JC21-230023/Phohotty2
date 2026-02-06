@@ -74,7 +74,28 @@ class GalleryPage extends StatelessWidget {
           ),
          // child: Image.file(File(filePath), fit: BoxFit.cover),
          //↑　ローカル移行のため保持
-          child:Image.network(item["path"], fit: BoxFit.cover),
+          child: Image.network(
+            item["path"],
+            fit: BoxFit.cover,
+            loadingBuilder: (context, child, loadingProgress) {
+              if (loadingProgress == null) return child;
+              return Center(
+                child: CircularProgressIndicator(
+                  value: loadingProgress.expectedTotalBytes != null
+                      ? loadingProgress.cumulativeBytesLoaded /
+                          loadingProgress.expectedTotalBytes!
+                      : null,
+                ),
+              );
+            },
+            errorBuilder: (context, error, stackTrace) {
+              debugPrint('Image load error in gallery_page: $error');
+              return Container(
+                color: Colors.grey[300],
+                child: const Icon(Icons.broken_image, color: Colors.grey),
+              );
+            },
+          ),
         );
       },
     );

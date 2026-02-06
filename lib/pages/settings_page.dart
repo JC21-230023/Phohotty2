@@ -19,41 +19,71 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   Future<void> _loadSettings() async {
-    final prefs = await SharedPreferences.getInstance();
-    setState(() {
-      _aiTaggingEnabled = prefs.getBool('aiTaggingEnabled') ?? true;
-    });
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      if (mounted) {
+        setState(() {
+          _aiTaggingEnabled = prefs.getBool('aiTaggingEnabled') ?? true;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error loading settings: $e');
+    }
   }
 
   Future<void> _saveAiTaggingEnabled(bool value) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('aiTaggingEnabled', value);
-    setState(() {
-      _aiTaggingEnabled = value;
-    });
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('aiTaggingEnabled', value);
+      if (mounted) {
+        setState(() {
+          _aiTaggingEnabled = value;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error saving settings: $e');
+    }
   }
 
   Future<void> _requestPhotoPermission(BuildContext context) async {
-    final status = await Permission.photos.request();
+    try {
+      final status = await Permission.photos.request();
 
-    if (status.isGranted) {
-      _show(context, '写真フォルダへのアクセスを許可しました');
-    } else if (status.isPermanentlyDenied) {
-      _openSettings(context);
-    } else {
-      _show(context, '写真フォルダへのアクセスが拒否されました');
+      if (!mounted) return;
+
+      if (status.isGranted) {
+        _show(context, '写真フォルダへのアクセスを許可しました');
+      } else if (status.isPermanentlyDenied) {
+        _openSettings(context);
+      } else {
+        _show(context, '写真フォルダへのアクセスが拒否されました');
+      }
+    } catch (e) {
+      debugPrint('Photo permission error: $e');
+      if (mounted) {
+        _show(context, '権限リクエストでエラーが発生しました');
+      }
     }
   }
 
   Future<void> _requestLocationPermission(BuildContext context) async {
-    final status = await Permission.locationWhenInUse.request();
+    try {
+      final status = await Permission.locationWhenInUse.request();
 
-    if (status.isGranted) {
-      _show(context, '位置情報へのアクセスを許可しました');
-    } else if (status.isPermanentlyDenied) {
-      _openSettings(context);
-    } else {
-      _show(context, '位置情報へのアクセスが拒否されました');
+      if (!mounted) return;
+
+      if (status.isGranted) {
+        _show(context, '位置情報へのアクセスを許可しました');
+      } else if (status.isPermanentlyDenied) {
+        _openSettings(context);
+      } else {
+        _show(context, '位置情報へのアクセスが拒否されました');
+      }
+    } catch (e) {
+      debugPrint('Location permission error: $e');
+      if (mounted) {
+        _show(context, '権限リクエストでエラーが発生しました');
+      }
     }
   }
 

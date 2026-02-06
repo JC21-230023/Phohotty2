@@ -17,20 +17,35 @@ class AuthPage extends StatelessWidget {
 					child: StreamBuilder<FbUser?>(
 						stream: FbAuth.instance.authStateChanges,
 						builder: (context, snapshot) {
+							// エラーハンドリング
+							if (snapshot.hasError) {
+								debugPrint('Auth stream error: ${snapshot.error}');
+								return Center(
+									child: Text('認証エラーが発生しました: ${snapshot.error}'),
+								);
+							}
+
 							if (snapshot.connectionState == ConnectionState.waiting) {
 								return const CircularProgressIndicator();
 							}
 
 							final user = snapshot.data;
 							if (user != null) {
+								// displayName が空文字列の場合のクラッシュを防ぐ
+								final displayInitial = (user.displayName?.isNotEmpty ?? false)
+									? user.displayName!.substring(0, 1)
+									: 'U';
+								
 								return Column(
 									mainAxisSize: MainAxisSize.min,
 									children: [
 										CircleAvatar(
 											radius: 40,
-											backgroundImage: user.photoUrl != null ? NetworkImage(user.photoUrl!) : null,
-											child: user.photoUrl == null
-													? Text((user.displayName ?? 'U').substring(0, 1))
+											backgroundImage: user.photoUrl != null && user.photoUrl!.isNotEmpty
+												? NetworkImage(user.photoUrl!)
+												: null,
+											child: user.photoUrl == null || user.photoUrl!.isEmpty
+													? Text(displayInitial)
 													: null,
 										),
 										const SizedBox(height: 12),

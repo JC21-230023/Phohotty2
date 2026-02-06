@@ -18,9 +18,15 @@ Future<void> main() async {
   }
 
   // Initialize Firebase before using any Firebase services
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+  try {
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+    debugPrint('Firebase initialized successfully');
+  } catch (e) {
+    debugPrint('Firebase initialization error: $e');
+    // Continue anyway - Firebase might work despite init error
+  }
 
   runApp(const MyApp());
 }
@@ -56,6 +62,23 @@ class _MyAppState extends State<MyApp> {
       home: StreamBuilder<FbUser?>(
         stream: FbAuth.instance.authStateChanges,
         builder: (context, snapshot) {
+          // Error handling for auth stream
+          if (snapshot.hasError) {
+            debugPrint('Auth stream error in main: ${snapshot.error}');
+            return const Scaffold(
+              body: Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text('認証エラー'),
+                    SizedBox(height: 16),
+                    CircularProgressIndicator(),
+                  ],
+                ),
+              ),
+            );
+          }
+          
           // while waiting for auth state
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Scaffold(body: Center(child: CircularProgressIndicator()));

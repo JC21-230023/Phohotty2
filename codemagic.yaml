@@ -4,7 +4,7 @@ workflows:
     max_build_duration: 90
     instance_type: mac_mini_m1
     integrations:
-      app_store_connect: "ここに確認した名前を入れる" 
+      app_store_connect: IOSAPP_TEAM_E 
     environment:
       groups:
         - ios_credentials

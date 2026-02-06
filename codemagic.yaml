@@ -3,57 +3,40 @@ workflows:
     name: Release (Tag -> Store)
     max_build_duration: 90
     instance_type: mac_mini_m1
-    # ビルド番号を自動で付与
-    version: 1.4.0+$BUILD_NUMBER 
     environment:
+      groups:
+        - ios_credentials
+        - android_credentials
+        - notifications
       vars:
         FLUTTER_CHANNEL: "stable"
         APP_ENV: "prod"
         DART_DEFINES: "ENV=prod"
-        IOS_SCHEME: "Runner" # 一般的にはRunner。AppProdならそのままで
-        IOS_CONFIGURATION: "Release"
         ANDROID_FLAVOR: "prod"
       flutter: "3.24.0"
       xcode: "15.4"
       cocoapods: "1.14.3"
-      groups:
-        - ios_credentials    # ここに GOOGLE_SERVICE_INFO_IOS を追加してください
-        - android_credentials
-        - notifications
     triggering:
       events:
         - tag
       tag_patterns:
         - pattern: "v*"
           include: true
-    cache:
-      cache_paths:
-        - ~/.pub-cache
-        - ~/Library/Caches/CocoaPods
-        - ~/.gradle/caches
     scripts:
-      # 1. Firebase iOS設定ファイルの書き出し（重要）
       - name: Set up GoogleService-Info.plist
         script: |
           echo "$GOOGLE_SERVICE_INFO_IOS" > ios/Runner/GoogleService-Info.plist
-
-      # 2. Androidキーストアの準備
       - name: Prepare secrets (Android keystore)
         script: |
           echo $CM_KEYSTORE | base64 --decode > android/keystores/release.keystore
-
-      # 3. 依存関係のインストール
       - name: Flutter deps
         script: |
           flutter pub get
           cd ios && pod install --repo-update && cd ..
-
       - name: Tests
         script: |
           flutter test
-
-      # 4. Androidビルド
-      - name: Build Android App Bundle (Release)
+      - name: Build Android App Bundle
         script: |
           flutter build appbundle \
             --release \
@@ -61,17 +44,6 @@ workflows:
             --build-name=1.4.0 \
             --build-number=${BUILD_NUMBER} \
             --dart-define=${DART_DEFINES}
-
-      - name: Android Code Signing (Gradle props)
-        script: |
-          cat >> android/gradle.properties <<EOF
-          MY_STORE_FILE=keystores/release.keystore
-          MY_STORE_PASSWORD=$CM_KEYSTORE_PASSWORD
-          MY_KEY_ALIAS=$CM_KEY_ALIAS
-          MY_KEY_PASSWORD=$CM_KEY_PASSWORD
-          EOF
-
-      # 5. iOSビルド（IPA作成）
       - name: Build iOS IPA
         script: |
           flutter build ipa \
@@ -80,28 +52,23 @@ workflows:
             --build-number=${BUILD_NUMBER} \
             --dart-define=${DART_DEFINES} \
             --export-options-plist=ios/exportOptions.plist
-
+      # CrashlyticsのdSYMアップロードをスクリプトで実行（確実な方法）
+      - name: Upload dSYM to Firebase Crashlytics
+        script: |
+          find build/ios/archive -name "*.dSYM" | xcode-project upload-dsyms --app-id "$FIREBASE_APP_ID_IOS"
     artifacts:
       - build/app/outputs/**/*.aab
       - build/ios/ipa/*.ipa
       - build/ios/archive/*.xcarchive
-
     publishing:
-      # Crashlyticsの解析に必要なdSYMファイルを自動アップロード
-      firebase_crashlytics:
-        fetch_symbols: true
-      
       app_store_connect:
-        auth: apiKey
-        key_id: $APP_STORE_CONNECT_KEY_IDENTIFIER
-        issuer_id: $APP_STORE_CONNECT_ISSUER_ID
-        private_key: $APP_STORE_CONNECT_PRIVATE_KEY
+        auth: integration # "apiKey" から変更
         submit_to_testflight: true
-        notify_testers: true
-
+      google_play:
+        credentials: $GOOGLE_PLAY_SERVICE_ACCOUNT
+        track: internal
       slack:
         channel: "#ci-notify"
         notify:
           success: true
           failure: true
-        webhook_url: $SLACK_WEBHOOK_URL

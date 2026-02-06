@@ -10,8 +10,8 @@ workflows:
     environment:
       groups:
         - ios_credentials
-        - android_credentials
-        - notifications
+        # - android_credentials
+        # - notifications
       vars:
         FLUTTER_CHANNEL: "stable"
         APP_ENV: "prod"

@@ -4,6 +4,10 @@ workflows:
     max_build_duration: 90
     instance_type: mac_mini_m1
     environment:
+      # --- ここを追加：App Store Connect連携を有効化 ---
+      integrations:
+        - app_store_connect
+      # ------------------------------------------
       groups:
         - ios_credentials
         - android_credentials
@@ -52,7 +56,6 @@ workflows:
             --build-number=${BUILD_NUMBER} \
             --dart-define=${DART_DEFINES} \
             --export-options-plist=ios/exportOptions.plist
-      # CrashlyticsのdSYMアップロードをスクリプトで実行（確実な方法）
       - name: Upload dSYM to Firebase Crashlytics
         script: |
           find build/ios/archive -name "*.dSYM" | xcode-project upload-dsyms --app-id "$FIREBASE_APP_ID_IOS"
@@ -62,7 +65,7 @@ workflows:
       - build/ios/archive/*.xcarchive
     publishing:
       app_store_connect:
-        auth: integration # "apiKey" から変更
+        auth: integration 
         submit_to_testflight: true
       google_play:
         credentials: $GOOGLE_PLAY_SERVICE_ACCOUNT

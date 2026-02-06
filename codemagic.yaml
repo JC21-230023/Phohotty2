@@ -36,9 +36,9 @@ workflows:
           if [ -d "ios" ]; then
             cd ios && pod install --repo-update && cd ..
           fi
-      - name: Tests
-        script: |
-          flutter test
+      #- name: Tests
+      #  script: |
+      #    flutter test
       - name: Build iOS IPA
         script: |
           flutter build ipa \

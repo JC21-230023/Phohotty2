@@ -3,9 +3,10 @@ workflows:
     name: Release (Tag -> Store)
     max_build_duration: 90
     instance_type: mac_mini_m1
-    # integrations は environment の中ではなく、同じ階層に置きます
+    # --- 修正箇所：リスト形式ではなく辞書形式で記述 ---
     integrations:
-      - app_store_connect
+      app_store_connect: "Your Integration Name" # CodemagicのWeb画面で設定した連携名
+    # ---------------------------------------------
     environment:
       groups:
         - ios_credentials

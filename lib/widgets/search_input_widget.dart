@@ -1,8 +1,5 @@
 import 'package:flutter/material.dart';
-//import 'package:provider/provider.dart';
 
-
-//import 'package:flutter/material.dart';
 
 /// 検索バーと送信（紙飛行機）ボタン、クリア（×）ボタンを持つ再利用可能ウィジェット。
 /// 入力が空で送信ボタンが押された場合は、空文字列 "" を onSubmit に渡します。

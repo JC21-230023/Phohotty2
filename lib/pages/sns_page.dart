@@ -1,9 +1,9 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
+//import 'package:image_picker/image_picker.dart';//ローカル移行のためコメントアウト
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+//import 'package:firebase_auth/firebase_auth.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:phototty/services/fbstore_getter.dart';
 import 'package:phototty/widgets/taglist_widget.dart';
@@ -29,6 +29,7 @@ class _SnsPageState extends State<SnsPage> {
 
 
   // 端末からの画像選択（従来の機能）
+  /*ローカル移行のためコメントアウト
   Future<void> _pickImageFromDevice() async {
     final pickedFile = await ImagePicker().pickImage(source: ImageSource.gallery);
     if (pickedFile != null) {
@@ -38,7 +39,7 @@ class _SnsPageState extends State<SnsPage> {
         _selectedImageName = null;
       });
     }
-  }
+  }*/
 
   // FirebaseStorageから画像リストを取得して選択
   Future<void> _pickImageFromFirebaseStorage() async {

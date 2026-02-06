@@ -1,5 +1,6 @@
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
+import 'package:phototty/services/fb_auth.dart';
 
 class StoragePhoto {
   final String name;
@@ -17,9 +18,14 @@ class StoragePhoto {
 class StoragePhotoGetter {
   StoragePhotoGetter._();
   static final StoragePhotoGetter instance = StoragePhotoGetter._();
-
+  
   final FirebaseStorage _storage = FirebaseStorage.instance;
 
+final String cUser=FbAuth.instance.currentUser?.uid ?? 'error_user';
+
+Future<List<StoragePhoto>?> getPhotosForCurrentUser() async {
+    return getPhotosForUser(cUser);
+}
   /// 指定されたユーザーのFirebaseStorageフォルダから画像一覧を取得
   /// [userId]: ユーザーID（必須）
   /// Returns: StoragePhotoのリスト、またはエラー時はnull

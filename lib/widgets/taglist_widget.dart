@@ -57,7 +57,6 @@ class _TagSelectorState extends State<TagSelector> {
     _suggestedTags = List<String>.from(widget.initialSuggestedTags);
     _customTags = List<String>.from(widget.initialCustomTags);
     _selected = _suggestedTags.toSet();//初期のタグをSelectedへ
-    //Set<String>.from(widget.initialSelectedTags);
   }
 
   @override

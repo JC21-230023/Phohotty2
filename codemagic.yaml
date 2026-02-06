@@ -5,7 +5,7 @@ workflows:
     instance_type: mac_mini_m1
     # --- 修正箇所：特定の名前を指定せず、利用可能な連携を有効にする ---
     integrations:
-      app_store_connect: default_subscription # または Codemagic画面で設定した実際の「名前」
+      app_store_connect: IOSAPP_TEAM_E # または Codemagic画面で設定した実際の「名前」
     # -----------------------------------------------------------
     environment:
       groups:

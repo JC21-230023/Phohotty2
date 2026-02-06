@@ -17,9 +17,9 @@ workflows:
         APP_ENV: "prod"
         DART_DEFINES: "ENV=prod"
         ANDROID_FLAVOR: "prod"
-      flutter: "3.24.0"
-      xcode: "15.4"
-      cocoapods: "1.14.3"
+      flutter: latest
+      xcode: latest
+      cocoapods: latest
     triggering:
       events:
         - tag

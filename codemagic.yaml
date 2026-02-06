@@ -46,7 +46,7 @@ workflows:
             --build-name=1.4.0 \
             --build-number=${BUILD_NUMBER} \
             --dart-define=${DART_DEFINES} \
-            --export-options-plist=ios/exportOptions.plist
+      #      --export-options-plist=ios/exportOptions.plist
       - name: Upload dSYM to Firebase Crashlytics
         script: |
           # アーカイブが存在する場合のみdSYMをアップロード

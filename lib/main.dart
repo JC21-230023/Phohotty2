@@ -6,33 +6,42 @@ import 'firebase_options.dart';
 import 'pages/main_tab_page.dart';
 import 'pages/auth_page.dart';
 import 'services/fb_auth.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Load .env file (fail gracefully if not found)
+  // 1. 初期化状態を管理するフラグ
+  bool isFirebaseReady = false;
+
   try {
     await dotenv.load(fileName: '.env');
   } catch (e) {
     debugPrint('Warning: .env file not found - $e');
   }
 
-  // Initialize Firebase before using any Firebase services
   try {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
+    
+    // Crashlyticsのエラー転送設定
+    FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterFatalError;
+    
+    isFirebaseReady = true; // 成功時にフラグを立てる
     debugPrint('Firebase initialized successfully');
   } catch (e) {
     debugPrint('Firebase initialization error: $e');
-    // Continue anyway - Firebase might work despite init error
+    // 失敗時はフラグが false のままになる
   }
 
-  runApp(const MyApp());
+  // フラグをMyAppに渡す
+  runApp(MyApp(isFirebaseReady: isFirebaseReady));
 }
 
 class MyApp extends StatefulWidget {
-  const MyApp({super.key});
+  final bool isFirebaseReady; // 追加
+  const MyApp({super.key, required this.isFirebaseReady});
 
   @override
   State<MyApp> createState() => _MyAppState();
@@ -42,7 +51,6 @@ class _MyAppState extends State<MyApp> {
   @override
   void initState() {
     super.initState();
-    // Request storage permission after app is fully initialized
     _requestPermissions();
   }
 
@@ -57,12 +65,24 @@ class _MyAppState extends State<MyApp> {
 
   @override
   Widget build(BuildContext context) {
+    // 解決策1: Firebaseが準備できていない場合は、Auth機能を呼ばずにエラー画面を表示
+    if (!widget.isFirebaseReady) {
+      return const MaterialApp(
+        home: Scaffold(
+          body: Center(
+            child: Text('Firebaseの初期化に失敗しました。\n設定ファイルやネットワークを確認してください。'),
+          ),
+        ),
+      );
+    }
+
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       home: StreamBuilder<FbUser?>(
         stream: FbAuth.instance.authStateChanges,
+        // 解決策2: initialData を設定し、一瞬の null による「 AuthPage への飛ばされ」を防ぐ
+        initialData: FbAuth.instance.currentUser, 
         builder: (context, snapshot) {
-          // Error handling for auth stream
           if (snapshot.hasError) {
             debugPrint('Auth stream error in main: ${snapshot.error}');
             return const Scaffold(
@@ -79,10 +99,11 @@ class _MyAppState extends State<MyApp> {
             );
           }
           
-          // while waiting for auth state
-          if (snapshot.connectionState == ConnectionState.waiting) {
+          // 接続待ちかつ、初期データ（キャッシュ）もない場合のみローディング表示
+          if (snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData) {
             return const Scaffold(body: Center(child: CircularProgressIndicator()));
           }
+
           final user = snapshot.data;
           if (user == null) {
             return const AuthPage();

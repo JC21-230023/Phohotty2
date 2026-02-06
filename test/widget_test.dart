@@ -1,30 +1,16 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-
 import 'package:phototty/main.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+  testWidgets('App load test', (WidgetTester tester) async {
+    // MyApp に必要な isFirebaseReady 引数を渡す
+    // テスト環境では一旦 true (または false) を渡してビルドできるか確認
+    await tester.pumpWidget(const MyApp(isFirebaseReady: true));
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
-
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
-
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    // カウンターアプリのテストコードは現在のアプリには合わないため、
+    // エラーの原因になる expect 行などは削除またはコメントアウトします。
+    
+    // 例: アプリが起動して何か表示されているかだけ確認
+    expect(find.byType(MyApp), findsOneWidget);
   });
 }

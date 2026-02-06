@@ -3,11 +3,10 @@ workflows:
     name: Release (Tag -> Store)
     max_build_duration: 90
     instance_type: mac_mini_m1
+    # integrations は environment の中ではなく、同じ階層に置きます
+    integrations:
+      - app_store_connect
     environment:
-      # --- ここを追加：App Store Connect連携を有効化 ---
-      integrations:
-        - app_store_connect
-      # ------------------------------------------
       groups:
         - ios_credentials
         - android_credentials

@@ -33,7 +33,7 @@ class _TagLensPageState extends State<TagLensPage> {
   final customTagController = TextEditingController();
 
   late final GoogleVisionService vision;
-  final local = LocalStorageService();
+  //final local = LocalStorageService();
 
   @override
   void initState() {
@@ -121,7 +121,7 @@ class _TagLensPageState extends State<TagLensPage> {
       final uid = user.uid;
       
       // TagImageSaver で処理を統一
-      await TagImageSaver.saveImageWithTags(
+      await TagImageSaver.saveImageWithTags(//
         imageBytes: imageBytes!,
         tags: _selectedTags.toList(),//(widgetの)tagList.selectedTagsに
         uid: uid,

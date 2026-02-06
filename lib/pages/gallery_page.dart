@@ -26,7 +26,7 @@ class GalleryPage extends StatelessWidget {
           ),
           Expanded(
             child: FutureBuilder<List<Map<String, dynamic>>>(
-              future: local.loadGallery(),
+              future: local.loadGallery(),//ここで使用
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Center(child: CircularProgressIndicator());

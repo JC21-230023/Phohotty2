@@ -3,6 +3,8 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:path_provider/path_provider.dart';
+import 'package:phototty/services/fb_auth.dart';
+import 'package:phototty/services/storage_photo_getter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
 
@@ -15,10 +17,9 @@ class LocalStorageService {
 
     final id = uuid.v4();
     final imagePath = "${directory.path}/$id.jpg";
-
+    print("Saving image to: $imagePath");
     final file = File(imagePath);
     await file.writeAsBytes(bytes);
-
     return imagePath;
   }
 
@@ -43,8 +44,9 @@ class LocalStorageService {
   Future<List<Map<String, dynamic>>> loadGallery() async {
     final prefs = await SharedPreferences.getInstance();
 
+//################
+//###############
     final list = prefs.getStringList('gallery') ?? [];
-
     return list
         .map((item) => jsonDecode(item) as Map<String, dynamic>)
         .toList();
@@ -67,5 +69,8 @@ class LocalStorageService {
   Future<void> clearAll() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('gallery');
+  }
+  Future<void> getImageFromUser() async {
+    print(uuid);
   }
 }

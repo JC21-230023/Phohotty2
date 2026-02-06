@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../services/fb_auth.dart';
 import 'user_create_page.dart';
 import 'user_signin_page.dart';
+import '../services/local_storage.dart';
+
 
 class AuthPage extends StatelessWidget {
 	const AuthPage({super.key});
@@ -39,6 +41,8 @@ class AuthPage extends StatelessWidget {
 										ElevatedButton.icon(
 											onPressed: () async {
 												await FbAuth.instance.signOut();
+                        // ローカルストレージもクリア
+                       await LocalStorageService().clearAll();
 											},
 											icon: const Icon(Icons.logout),
 											label: const Text('サインアウト'),

@@ -2,12 +2,36 @@
 import 'package:flutter/material.dart';
 import '../services/local_storage.dart';
 
-class GalleryPage extends StatelessWidget {
+class GalleryPage extends StatefulWidget {
   const GalleryPage({super.key});
 
   @override
+  State<GalleryPage> createState() => _GalleryPageState();
+}
+
+class _GalleryPageState extends State<GalleryPage> {
+  final local = LocalStorageService();
+  late Future<List<Map<String, dynamic>>> _galleryFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _galleryFuture = _loadGalleryData();
+  }
+
+  Future<List<Map<String, dynamic>>> _loadGalleryData() async {
+    await local.getImageFromUser(); // 先に画像を取得
+    return await local.loadGallery(); // その後でギャラリーを読み込み
+  }
+
+  void _refreshGallery() {
+    setState(() {
+      _galleryFuture = local.loadGallery();
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final local = LocalStorageService();
 
     return Scaffold(
       appBar: AppBar(title: const Text("ギャラリー")),
@@ -17,16 +41,31 @@ class GalleryPage extends StatelessWidget {
             padding: const EdgeInsets.all(12),
             child: SizedBox(
               width: double.infinity,
-              child: ElevatedButton.icon(
-                icon: const Icon(Icons.label),
-                label: const Text("画像にタグ付け"),
-                onPressed: () => Navigator.pushNamed(context, "/tag-lens"),
+              child: //Row(
+                /*children: [
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      icon: const Icon(Icons.label),
+                      label: const Text("画像にタグ付け"),
+                      onPressed: () async {
+                        await Navigator.pushNamed(context, "/tag-lens");
+                        _refreshGallery(); // 戻ってきたら更新
+                      },
+                    ),
+                  ),
+                  const SizedBox(width: 8),*/
+                  ElevatedButton.icon(
+                    icon: const Icon(Icons.refresh),
+                    label: const Text("更新"),
+                    onPressed: _refreshGallery,
+                  ),
+               // ],
               ),
             ),
-          ),
+          //),
           Expanded(
             child: FutureBuilder<List<Map<String, dynamic>>>(
-              future: local.loadGallery(),//ここで使用
+              future: _galleryFuture,
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Center(child: CircularProgressIndicator());

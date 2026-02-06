@@ -225,6 +225,7 @@ class _TagLensPageState extends State<TagLensPage> {
   // ===============================
   @override
   Widget build(BuildContext context) {
+    final currentImage = imageBytes;
     return Scaffold(
       appBar: AppBar(
         title: const Text('ふぉとってぃ'),
@@ -256,11 +257,11 @@ class _TagLensPageState extends State<TagLensPage> {
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(color: Colors.blue.shade200),
                         ),
-                        child: imageBytes == null
+                        child: currentImage == null
                             ? const Center(
                                 child: Text('クリックして画像を選択'),//v2：更新の確認
                               )
-                            : Image.memory(imageBytes!, fit: BoxFit.cover),
+                            : Image.memory(currentImage, fit: BoxFit.cover),
                       ),
                     ),
                     TagSelector(

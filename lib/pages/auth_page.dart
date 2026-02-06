@@ -40,9 +40,24 @@ class AuthPage extends StatelessWidget {
 										const SizedBox(height: 16),
 										ElevatedButton.icon(
 											onPressed: () async {
-												await FbAuth.instance.signOut();
-                        // ローカルストレージもクリア
-                       await LocalStorageService().clearAll();
+												try {
+													await FbAuth.instance.signOut();
+													// ローカルストレージもクリア
+													await LocalStorageService().clearAll();
+													// Ensure widget is still mounted after async operation
+													if (context.mounted) {
+														ScaffoldMessenger.of(context).showSnackBar(
+															const SnackBar(content: Text('サインアウトしました')),
+														);
+													}
+												} catch (e) {
+													debugPrint('Sign out error: $e');
+													if (context.mounted) {
+														ScaffoldMessenger.of(context).showSnackBar(
+															SnackBar(content: Text('サインアウトに失敗しました: $e')),
+														);
+													}
+												}
 											},
 											icon: const Icon(Icons.logout),
 											label: const Text('サインアウト'),
@@ -61,10 +76,15 @@ class AuthPage extends StatelessWidget {
 											try {
 												final result = await FbAuth.instance.signInWithGoogle();
 												if (result == null) {
-													ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('サインインがキャンセルされました')));
+													if (context.mounted) {
+														ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('サインインがキャンセルされました')));
+													}
 												}
 											} catch (e) {
-												ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('サインインに失敗しました: $e')));
+												debugPrint('Sign in error: $e');
+												if (context.mounted) {
+													ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('サインインに失敗しました: $e')));
+												}
 											}
 										},
 										icon: const Icon(Icons.login),

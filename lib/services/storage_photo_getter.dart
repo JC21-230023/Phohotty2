@@ -2,6 +2,7 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:phototty/services/fb_auth.dart';
 import 'dart:io';
+import 'dart:async';
 
 class StoragePhoto {
   final String name;
@@ -35,7 +36,7 @@ class StoragePhotoGetter {
           const Duration(seconds: 30),
           onTimeout: () => throw TimeoutException('Network request timed out'),
         );
-      } on SocketException catch (e) {
+      } on SocketException {
         // Connection reset by peer (errno = 54) or other socket errors
         if (attempt < maxRetries - 1) {
           attempt++;
@@ -44,7 +45,7 @@ class StoragePhotoGetter {
           continue;
         }
         rethrow;
-      } on TimeoutException catch (e) {
+      } on TimeoutException {
         if (attempt < maxRetries - 1) {
           attempt++;
           await Future.delayed(delay * attempt);
@@ -114,7 +115,12 @@ Future<List<StoragePhoto>?> getPhotosForCurrentUser() async {
     }
   }
 
-  /// 特定のパスから画像を取得（より詳細な制御が必要な場_retryNetworkCall(
+  /// 特定のパスから画像を取得（より詳細な制御が必要な場合）
+  /// [path]: FirebaseStorageのパス（例: 'users/userId/'）
+  Future<List<StoragePhoto>?> getPhotosFromPath(String path) async {
+    try {
+      final ref = _storage.ref().child(path);
+      final listResult = await _retryNetworkCall(
         () => ref.listAll(),
       );
 
@@ -140,11 +146,6 @@ Future<List<StoragePhoto>?> getPhotosForCurrentUser() async {
         } catch (e) {
           debugPrint('画像URL取得失敗: ${item.name}, エラー: $e');
           // Continue with other images instead of failing completely
-              downloadUrl: url,
-            ),
-          );
-        } catch (e) {
-          debugPrint('画像URL取得失敗: ${item.name}, エラー: $e');
         }
       }
 

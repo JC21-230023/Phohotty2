@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'dart:io';
+import 'dart:async';
 import 'local_storage.dart';
 
 class TagImageSaver {
@@ -22,7 +23,7 @@ class TagImageSaver {
           const Duration(seconds: 30),
           onTimeout: () => throw TimeoutException('Network request timed out'),
         );
-      } on SocketException catch (e) {
+      } on SocketException {
         if (attempt < maxRetries - 1) {
           attempt++;
           await Future.delayed(delay * attempt);
@@ -30,7 +31,7 @@ class TagImageSaver {
           continue;
         }
         rethrow;
-      } on TimeoutException catch (e) {
+      } on TimeoutException {
         if (attempt < maxRetries - 1) {
           attempt++;
           await Future.delayed(delay * attempt);
@@ -70,7 +71,7 @@ class TagImageSaver {
     final metadata = SettableMetadata(contentType: 'image/jpeg');
 
     // Upload with retry logic
-    final uploadTask = await _retryNetworkCall(
+    await _retryNetworkCall(
       () => storageRef.putData(imageBytes, metadata),
     );
     

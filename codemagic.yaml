@@ -39,7 +39,8 @@ workflows:
             --release \
             --build-name=1.4.0 \
             --build-number=${BUILD_NUMBER} \
-            --dart-define=${DART_DEFINES}
+            --dart-define=${DART_DEFINES} \
+            --export-method=app-store
       - name: Upload dSYM to Firebase Crashlytics
         script: |
           # より確実にファイルを拾うため find の検索範囲を広げています

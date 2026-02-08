@@ -25,7 +25,7 @@ workflows:
     scripts:
       - name: Set up GoogleService-Info.plist
         script: |
-          echo "$GOOGLE_SERVICE_INFO_IOS" > ios/Runner/GoogleService-Info.plist #firebaseから取得した内容を環境変数に設定しておく
+          echo "$GOOGLE_SERVICE_INFO_IOS" > ios/Runner/GoogleService-Info.plist
       - name: Flutter deps
         script: |
           flutter pub get
@@ -33,9 +33,6 @@ workflows:
       - name: Set up code signing
         script: |
           xcode-project use-profiles
-      #- name: Tests
-      #  script: |
-      #    flutter test
       - name: Build iOS IPA
         script: |
           flutter build ipa \
@@ -43,13 +40,10 @@ workflows:
             --build-name=1.4.0 \
             --build-number=${BUILD_NUMBER} \
             --dart-define=${DART_DEFINES}
-      #      --export-options-plist=ios/exportOptions.plist
       - name: Upload dSYM to Firebase Crashlytics
         script: |
-          # アーカイブが存在する場合のみdSYMをアップロード
-          if [ -d "build/ios/archive" ]; then
-            find build/ios/archive -name "*.dSYM" | xcode-project upload-dsyms --app-id "$FIREBASE_APP_ID_IOS"
-          fi
+          # より確実にファイルを拾うため find の検索範囲を広げています
+          find build/ios -name "*.dSYM" | xcode-project upload-dsyms --app-id "$FIREBASE_APP_ID_IOS"
     artifacts:
       - build/ios/ipa/*.ipa
       - build/ios/archive/*.xcarchive

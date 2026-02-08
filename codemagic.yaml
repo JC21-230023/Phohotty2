@@ -7,15 +7,15 @@ workflows:
       app_store_connect: "IOSAPP_TEAM_E" 
     environment:
       groups:
-        - ios_credentials
+        - ios_credentials # ここに GOOGLE_SERVICE_INFO_IOS, FIREBASE_APP_ID_IOS 等を設定
       vars:
         FLUTTER_CHANNEL: "stable"
         APP_ENV: "prod"
         DART_DEFINES: "ENV=prod"
         ANDROID_FLAVOR: "prod"
-      flutter: "3.38.9"   # エラーメッセージの推奨バージョンに合わせる
-      xcode: "17.0"       # Flutter 3.38以降は最新のXcodeを推奨
-      cocoapods: "1.16.2" # 最新のCocoaPods
+      flutter: "3.38.9"
+      xcode: "17.0"
+      cocoapods: "1.16.2"
     triggering:
       events:
         - tag
@@ -23,6 +23,11 @@ workflows:
         - pattern: "v*"
           include: true
     scripts:
+      - name: Force Automatic Signing (Windows Fix)
+        script: |
+          # Windowsからプッシュされた「手動署名」の設定を、ビルドマシン上で「自動」に強制変換
+          sed -i 's/ProvisioningStyle = Manual/ProvisioningStyle = Automatic/g' ios/Runner.xcodeproj/project.pbxproj
+          sed -i 's/CODE_SIGN_STYLE = Manual/CODE_SIGN_STYLE = Automatic/g' ios/Runner.xcodeproj/project.pbxproj
       - name: Set up GoogleService-Info.plist
         script: |
           echo "$GOOGLE_SERVICE_INFO_IOS" > ios/Runner/GoogleService-Info.plist
@@ -32,14 +37,11 @@ workflows:
           cd ios && pod install --repo-update && cd ..
       - name: Set up code signing
         script: |
+          # CodemagicがAPIキーからプロファイルを生成・取得する
           xcode-project use-profiles
       - name: Build iOS IPA
         script: |
-          # プロジェクトファイルを直接書き換え、手動署名設定を無効化する（Windowsユーザー向けの秘策）
-          sed -i '' 's/ProvisioningStyle = Manual;/ProvisioningStyle = Automatic;/g' ios/Runner.xcodeproj/project.pbxproj
-          sed -i '' 's/CODE_SIGN_STYLE = Manual;/CODE_SIGN_STYLE = Automatic;/g' ios/Runner.xcodeproj/project.pbxproj
-
-          # 1. 署名なしでビルド
+          # 1. 署名なしでアーカイブを作成
           flutter build ipa \
             --release \
             --build-name=1.4.0 \
@@ -47,15 +49,15 @@ workflows:
             --dart-define=${DART_DEFINES} \
             --no-codesign
 
-          # 2. Codemagicの署名エンジンを走らせる
+          # 2. 作成されたアーカイブをCodemagicの署名エンジンでIPA化（引数はシンプルに）
           xcode-project build-ipa \
             --workspace ios/Runner.xcworkspace \
             --scheme Runner \
             --archive-directory build/ios/archive
       - name: Upload dSYM to Firebase Crashlytics
         script: |
-          # より確実にファイルを拾うため find の検索範囲を広げています
-          find build/ios -name "*.dSYM" | xcode-project upload-dsyms --app-id "$FIREBASE_APP_ID_IOS"
+          # 確実にdSYMを見つけるためのパス指定
+          find build/ios/archive -name "*.dSYM" | xcode-project upload-dsyms --app-id "$FIREBASE_APP_ID_IOS"
     artifacts:
       - build/ios/ipa/*.ipa
       - build/ios/archive/*.xcarchive

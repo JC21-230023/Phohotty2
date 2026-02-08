@@ -35,13 +35,18 @@ workflows:
           xcode-project use-profiles
       - name: Build iOS IPA
         script: |
-          # 引数名を正しく修正：--build-name ではなく --bundle-version
-          # --build-number ではなく --build-version-code
+          # 1. 署名なしでビルド成果物（アーカイブ）を生成
+          flutter build ipa \
+            --release \
+            --build-name=1.4.0 \
+            --build-number=${BUILD_NUMBER} \
+            --dart-define=${DART_DEFINES} \
+            --no-codesign
+
+          # 2. 余計な引数を付けず、Codemagicに署名とIPA作成だけを任せる
           xcode-project build-ipa \
             --workspace ios/Runner.xcworkspace \
-            --scheme Runner \
-            --bundle-version "1.4.0" \
-            --build-version-code ${BUILD_NUMBER}
+            --scheme Runner
       - name: Upload dSYM to Firebase Crashlytics
         script: |
           # より確実にファイルを拾うため find の検索範囲を広げています

@@ -1,18 +1,16 @@
 workflows:
-  release:
-    name: Release (Tag -> Store)
-    max_build_duration: 90
+  ios-release:
+    name: iOS Release Workflow
+    max_build_duration: 60 # 無駄な消費を防ぐため制限
     instance_type: mac_mini_m1
     integrations:
       app_store_connect: "IOSAPP_TEAM_E" 
     environment:
       groups:
-        - ios_credentials # ここに GOOGLE_SERVICE_INFO_IOS, FIREBASE_APP_ID_IOS 等を設定
+        - ios_credentials
       vars:
         FLUTTER_CHANNEL: "stable"
-        APP_ENV: "prod"
         DART_DEFINES: "ENV=prod"
-        ANDROID_FLAVOR: "prod"
       flutter: "3.38.9"
       xcode: "17.0"
       cocoapods: "1.16.2"
@@ -23,32 +21,29 @@ workflows:
         - pattern: "v*"
           include: true
     scripts:
-      - name: Force Automatic Signing (Windows Fix)
+      - name: Force Automatic Signing (Fix for Windows users)
         script: |
-          # ProvisioningStyle を Manual から Automatic に変換
-          sed 's/ProvisioningStyle = Manual/ProvisioningStyle = Automatic/g' ios/Runner.xcodeproj/project.pbxproj > project.pbxproj.tmp && mv project.pbxproj.tmp ios/Runner.xcodeproj/project.pbxproj
+          # プロジェクトファイルを直接書き換え、Xcodeの手動署名エラーを物理的に消去
+          find . -name "project.pbxproj" -exec sed -i '' 's/Manual/Automatic/g' {} +
+          find . -name "CODE_SIGN_STYLE = Manual" -exec sed -i '' 's/CODE_SIGN_STYLE = Manual/CODE_SIGN_STYLE = Automatic/g' {} +
           
-          # CODE_SIGN_STYLE を Manual から Automatic に変換
-          sed 's/CODE_SIGN_STYLE = Manual/CODE_SIGN_STYLE = Automatic/g' ios/Runner.xcodeproj/project.pbxproj > project.pbxproj.tmp && mv project.pbxproj.tmp ios/Runner.xcodeproj/project.pbxproj
-          
-          # 変換が正しく行われたか確認するためのログ（デバッグ用）
-          grep "ProvisioningStyle" ios/Runner.xcodeproj/project.pbxproj
-          grep "CODE_SIGN_STYLE" ios/Runner.xcodeproj/project.pbxproj
       - name: Set up GoogleService-Info.plist
         script: |
           echo "$GOOGLE_SERVICE_INFO_IOS" > ios/Runner/GoogleService-Info.plist
-      - name: Flutter deps
+
+      - name: Flutter dependencies & Caching
         script: |
           flutter pub get
           cd ios && pod install --repo-update && cd ..
+
       - name: Set up code signing
         script: |
-          # CodemagicがAPIキーからプロファイルを生成・取得する
+          # APIキー（Integration）から配信用の証明書とプロファイルを自動生成/取得
           xcode-project use-profiles
-      - name: Build iOS IPA
+
+      - name: Build iOS IPA (Fast Mode)
         script: |
-          # 1. 署名なしでアーカイブを作成
-          # ここで明示的に CODE_SIGNING_ALLOWED=NO を渡して Xcode の署名チェックを回避します
+          # 署名なしアーカイブ作成（ビルド時間の節約）
           flutter build ipa \
             --release \
             --build-name=1.4.0 \
@@ -56,26 +51,22 @@ workflows:
             --dart-define=${DART_DEFINES} \
             --no-codesign
 
-          # 2. アーカイブから IPA を作成する際、プロジェクトの設定を「引数」で上書きします
-          # CODE_SIGN_STYLE="Automatic" を渡すことで、Manual設定を無効化します
+          # 作成されたアーカイブを強制的にAutomatic SigningでIPA化
           xcode-project build-ipa \
             --workspace ios/Runner.xcworkspace \
             --scheme Runner \
             --archive-directory build/ios/archive \
             --export-flags "CODE_SIGN_STYLE=Automatic"
-      - name: Upload dSYM to Firebase Crashlytics
+
+      - name: Upload dSYM to Firebase
         script: |
-          # 確実にdSYMを見つけるためのパス指定
+          # クラッシュ解析用のデバッグファイルをFirebaseへ送信
           find build/ios/archive -name "*.dSYM" | xcode-project upload-dsyms --app-id "$FIREBASE_APP_ID_IOS"
+
     artifacts:
       - build/ios/ipa/*.ipa
-      - build/ios/archive/*.xcarchive
+
     publishing:
       app_store_connect:
         auth: integration 
-        submit_to_testflight: true
-      slack:
-        channel: "#ci-notify"
-        notify:
-          success: true
-          failure: true
+        submit_to_testflight: true # 自動でTestFlightへアップロード

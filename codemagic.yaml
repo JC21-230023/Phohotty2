@@ -28,15 +28,11 @@ workflows:
           echo "$GOOGLE_SERVICE_INFO_IOS" > ios/Runner/GoogleService-Info.plist #firebaseから取得した内容を環境変数に設定しておく
       - name: Flutter deps
         script: |
-          # プロジェクトのルートに移動してから実行
           flutter pub get
-          # Podfileがないという警告への対策: iosフォルダが存在するか確認して実行
-          if [ -d "ios" ]; then
-            cd ios && pod install --repo-update && cd ..
-          fi
+          cd ios && pod install --repo-update && cd ..
       - name: Set up code signing
         script: |
-          xcode-project use-profiles --bundle-id "jp.ac.jc21.Phohotty2"
+          xcode-project use-profiles
       #- name: Tests
       #  script: |
       #    flutter test

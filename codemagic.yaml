@@ -35,19 +35,12 @@ workflows:
           xcode-project use-profiles
       - name: Build iOS IPA
         script: |
-          # 1. まず署名なしでアーカイブを作成（これは既に成功しています）
-          flutter build ipa \
-            --release \
-            --build-name=1.4.0 \
-            --build-number=${BUILD_NUMBER} \
-            --dart-define=${DART_DEFINES} \
-            --no-codesign
-
-          # 2. Codemagicのツールを使って、IPA作成と署名を一気に行う
-          # Web画面で設定した App Store 配信用のプロファイルが自動注入されます
+          # Flutterコマンドを使わず、Codemagicの署名エンジンにすべて任せる
           xcode-project build-ipa \
             --workspace ios/Runner.xcworkspace \
-            --scheme Runner
+            --scheme Runner \
+            --build-name 1.4.0 \
+            --build-number ${BUILD_NUMBER}
       - name: Upload dSYM to Firebase Crashlytics
         script: |
           # より確実にファイルを拾うため find の検索範囲を広げています

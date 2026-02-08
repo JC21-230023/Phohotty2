@@ -26,44 +26,47 @@ Future<Set<Marker>> doc2Marksers(
   final Set<Marker> ans = {};
 
   for (var doc in snap.docs) {
-    final data = doc.data();
-    final GeoPoint geoPoint = data['location'] as GeoPoint;
+    try {
+      final data = doc.data();
+      final loc = data['location'];
+      if (loc == null || loc is! GeoPoint) continue;
 
-    final String title = (data['description'] ?? 'No Title') as String;
-    final String imageUrl = (data['imageUrl'] ?? '') as String;
+      final String title = (data['description'] ?? 'No Title') as String;
+      final String imageUrl = (data['imageUrl'] ?? '') as String;
+      final postTagList = data['postTagList'];
+      final String tagList = postTagList is List
+          ? postTagList.map((e) => e?.toString() ?? '').join(', ')
+          : 'No Tags';
 
-    final String tagList = data['postTagList'] != null
-        ? (data['postTagList'] as List).join(', ')
-        : 'No Tags';
+      final BitmapDescriptor icon = imageUrl.isEmpty
+          ? BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed)
+          : await _iconFromImageUrl(imageUrl, size: 96, borderWidth: 4);
 
-    final BitmapDescriptor icon = imageUrl.isEmpty
-        ? BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed)
-        : await _iconFromImageUrl(imageUrl, size: 96, borderWidth: 4);
-
-    final marker = Marker(
-      markerId: MarkerId(doc.id),
-      position: LatLng(geoPoint.latitude, geoPoint.longitude),
-      icon: icon,
-
-      infoWindow: InfoWindow(
-        title: title,
-        snippet: tagList,
+      final marker = Marker(
+        markerId: MarkerId(doc.id),
+        position: LatLng(loc.latitude, loc.longitude),
+        icon: icon,
+        infoWindow: InfoWindow(
+          title: title,
+          snippet: tagList,
+          onTap: () {
+            onInfoWindowTap(
+              docId: doc.id,
+              title: title,
+              imageUrl: imageUrl,
+              tagList: tagList,
+            );
+          },
+        ),
         onTap: () {
-          onInfoWindowTap(
-            docId: doc.id,
-            title: title,
-            imageUrl: imageUrl,
-            tagList: tagList,
-          );
+          debugPrint("マーカーがタップされた: ${doc.id}");
         },
-      ),
+      );
 
-      onTap: () {
-        debugPrint("マーカーがタップされた: ${doc.id}");
-      },
-    );
-
-    ans.add(marker);
+      ans.add(marker);
+    } catch (e) {
+      debugPrint('post_marker skip doc ${doc.id}: $e');
+    }
   }
 
   return ans;

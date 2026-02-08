@@ -35,12 +35,19 @@ workflows:
           xcode-project use-profiles
       - name: Build iOS IPA
         script: |
+          # --export-method を明示し、かつXcodeの設定を無視してCodemagicのプロファイルを使わせる
           flutter build ipa \
             --release \
             --build-name=1.4.0 \
             --build-number=${BUILD_NUMBER} \
             --dart-define=${DART_DEFINES} \
-            --export-method=app-store
+            --export-method=app-store \
+            --no-codesign
+          
+          # ビルド後に手動で署名を適用する（もし上記だけで失敗する場合のバックアップ手段）
+          xcode-project build-ipa \
+            --workspace ios/Runner.xcworkspace \
+            --scheme Runner
       - name: Upload dSYM to Firebase Crashlytics
         script: |
           # より確実にファイルを拾うため find の検索範囲を広げています

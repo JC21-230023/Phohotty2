@@ -1,7 +1,7 @@
 workflows:
   ios-release:
     name: iOS Release Workflow
-    max_build_duration: 60 # 無駄な消費を防ぐため制限
+    max_build_duration: 60
     instance_type: mac_mini_m1
     integrations:
       app_store_connect: "IOSAPP_TEAM_E" 
@@ -11,9 +11,9 @@ workflows:
       vars:
         FLUTTER_CHANNEL: "stable"
         DART_DEFINES: "ENV=prod"
-      flutter: "3.38.9"
-      xcode: "17.0"
-      cocoapods: "1.16.2"
+      flutter: "3.24.5"
+      xcode: "16.1"
+      cocoapods: default
     triggering:
       events:
         - tag
@@ -21,47 +21,39 @@ workflows:
         - pattern: "v*"
           include: true
     scripts:
-      - name: Force Automatic Signing (Fix for Windows users)
+      - name: Force Automatic Signing & Build Fix
         script: |
-          # プロジェクトファイルを直接書き換え、Xcodeの手動署名エラーを物理的に消去
+          # 1. プロジェクトファイルを物理的に書き換え（Manualを徹底排除）
           find . -name "project.pbxproj" -exec sed -i '' 's/Manual/Automatic/g' {} +
-          find . -name "CODE_SIGN_STYLE = Manual" -exec sed -i '' 's/CODE_SIGN_STYLE = Manual/CODE_SIGN_STYLE = Automatic/g' {} +
+          find . -name "project.pbxproj" -exec sed -i '' 's/ProvisioningStyle = Manual/ProvisioningStyle = Automatic/g' {} +
           
-      - name: Set up GoogleService-Info.plist
-        script: |
+          # 2. GoogleService-Info.plistの配置
           echo "$GOOGLE_SERVICE_INFO_IOS" > ios/Runner/GoogleService-Info.plist
 
-      - name: Flutter dependencies & Caching
+      - name: Flutter deps & Pods
         script: |
           flutter pub get
           cd ios && pod install --repo-update && cd ..
 
       - name: Set up code signing
         script: |
-          # APIキー（Integration）から配信用の証明書とプロファイルを自動生成/取得
+          # Codemagicに証明書とプロファイルを準備させ、パスを取得する
           xcode-project use-profiles
 
-      - name: Build iOS IPA (Fast Mode)
+      - name: Build and Sign IPA (Final Strike)
         script: |
-          # ${BUILD_NUMBER} に直接 100 を足す計算式を組み込みます
-          NEW_BUILD_NUMBER=$((BUILD_NUMBER + 100))
-          
+          # ビルド番号を100底上げし、かつCodemagicが生成した設定(ExportOptions)を使って一本でビルド
+          # これにより Status 65 エラーを回避し、ビルド時間を最短にします
           flutter build ipa \
             --release \
             --build-name=1.4.0 \
-            --build-number=$NEW_BUILD_NUMBER \
+            --build-number=$((BUILD_NUMBER + 100)) \
             --dart-define=${DART_DEFINES} \
-            --no-codesign
-
-          xcode-project build-ipa \
-            --workspace ios/Runner.xcworkspace \
-            --scheme Runner \
-            --archive-directory build/ios/archive \
-            --export-flags "CODE_SIGN_STYLE=Automatic"
+            --export-options-plist=$CM_EXPORT_OPTIONS_PATH
 
       - name: Upload dSYM to Firebase
         script: |
-          # クラッシュ解析用のデバッグファイルをFirebaseへ送信
+          # クラッシュ解析用。もし不要ならこのステップを消すと1分節約できます
           find build/ios/archive -name "*.dSYM" | xcode-project upload-dsyms --app-id "$FIREBASE_APP_ID_IOS"
 
     artifacts:
@@ -70,4 +62,4 @@ workflows:
     publishing:
       app_store_connect:
         auth: integration 
-        submit_to_testflight: true # 自動でTestFlightへアップロード
+        submit_to_testflight: true

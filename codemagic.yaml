@@ -35,12 +35,13 @@ workflows:
           xcode-project use-profiles
       - name: Build iOS IPA
         script: |
-          # Flutterコマンドを使わず、Codemagicの署名エンジンにすべて任せる
+          # 引数名を正しく修正：--build-name ではなく --bundle-version
+          # --build-number ではなく --build-version-code
           xcode-project build-ipa \
             --workspace ios/Runner.xcworkspace \
             --scheme Runner \
-            --build-name 1.4.0 \
-            --build-number ${BUILD_NUMBER}
+            --bundle-version "1.4.0" \
+            --build-version-code ${BUILD_NUMBER}
       - name: Upload dSYM to Firebase Crashlytics
         script: |
           # より確実にファイルを拾うため find の検索範囲を広げています

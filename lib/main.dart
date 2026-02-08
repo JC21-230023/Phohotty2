@@ -90,37 +90,78 @@ class _MyAppState extends State<MyApp> {
 
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: StreamBuilder<FbUser?>(
-        stream: FbAuth.instance.authStateChanges,
-        // initialData を外し、ストリームの初回イベントのみで描画する（頻繁な再描画・ループを防ぐ）
-        builder: (context, snapshot) {
-          if (snapshot.hasError) {
-            debugPrint('Auth stream error in main: ${snapshot.error}');
-            return const Scaffold(
-              body: Center(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text('認証エラー'),
-                    SizedBox(height: 16),
-                    CircularProgressIndicator(),
-                  ],
-                ),
-              ),
-            );
-          }
-          // 初回は waiting または hasData が false のときローディング表示
-          if (snapshot.connectionState == ConnectionState.waiting || !snapshot.hasData) {
-            return const Scaffold(body: Center(child: CircularProgressIndicator()));
-          }
+      home: _AuthGate(isFirebaseReady: widget.isFirebaseReady),
+    );
+  }
+}
 
-          final user = snapshot.data;
+/// 認証状態に応じて AuthPage / MainTabPage を表示。
+/// initialData で即時表示し、ストリームが遅れてもタイムアウトでログイン画面を表示する。
+class _AuthGate extends StatefulWidget {
+  final bool isFirebaseReady;
+
+  const _AuthGate({required this.isFirebaseReady});
+
+  @override
+  State<_AuthGate> createState() => _AuthGateState();
+}
+
+class _AuthGateState extends State<_AuthGate> {
+  bool _showLoginAfterTimeout = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // ストリームが emit されない場合に備え、一定時間でログイン画面を表示
+    Future.delayed(const Duration(seconds: 10), () {
+      if (mounted && !_showLoginAfterTimeout) {
+        setState(() => _showLoginAfterTimeout = true);
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (!widget.isFirebaseReady) {
+      return const Scaffold(
+        body: Center(
+          child: Text(
+            'Firebaseの初期化に失敗しました。\n設定ファイルやネットワークを確認してください。',
+          ),
+        ),
+      );
+    }
+
+    return StreamBuilder<FbUser?>(
+      stream: FbAuth.instance.authStateChanges,
+      initialData: FbAuth.instance.currentUser,
+      builder: (context, snapshot) {
+        if (snapshot.hasError) {
+          debugPrint('Auth stream error in main: ${snapshot.error}');
+          return const Scaffold(
+            body: Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text('認証エラー'),
+                  SizedBox(height: 16),
+                  CircularProgressIndicator(),
+                ],
+              ),
+            ),
+          );
+        }
+        // データがある、またはタイムアウト済みならログイン/メインを表示（読み込みで永久に止まらない）
+        final hasData = snapshot.hasData;
+        if (hasData || _showLoginAfterTimeout) {
+          final user = hasData ? snapshot.data : null;
           if (user == null) {
             return const AuthPage();
           }
           return const MainTabPage();
-        },
-      ),
+        }
+        return const Scaffold(body: Center(child: CircularProgressIndicator()));
+      },
     );
   }
 }

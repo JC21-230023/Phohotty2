@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:photo_manager/photo_manager.dart';
@@ -21,8 +22,15 @@ Future<void> main() async {
   }
 
   try {
+    // ネットワーク不調で無限待ちにならないようタイムアウトを設定
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
+    ).timeout(
+      const Duration(seconds: 15),
+      onTimeout: () {
+        debugPrint('Firebase initialization timed out');
+        throw TimeoutException('Firebase init', Duration(seconds: 15));
+      },
     );
     
     // Crashlyticsのエラー転送設定
@@ -51,7 +59,11 @@ class _MyAppState extends State<MyApp> {
   @override
   void initState() {
     super.initState();
-    _requestPermissions();
+    // 起動直後はUI描画と権限ダイアログの競合でデッドロックすることがあるため、
+    // 初回フレーム描画後に少し遅延してから権限リクエストを行う
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Future.delayed(const Duration(milliseconds: 800), _requestPermissions);
+    });
   }
 
   Future<void> _requestPermissions() async {
@@ -80,8 +92,7 @@ class _MyAppState extends State<MyApp> {
       debugShowCheckedModeBanner: false,
       home: StreamBuilder<FbUser?>(
         stream: FbAuth.instance.authStateChanges,
-        // 解決策2: initialData を設定し、一瞬の null による「 AuthPage への飛ばされ」を防ぐ
-        initialData: FbAuth.instance.currentUser, 
+        // initialData を外し、ストリームの初回イベントのみで描画する（頻繁な再描画・ループを防ぐ）
         builder: (context, snapshot) {
           if (snapshot.hasError) {
             debugPrint('Auth stream error in main: ${snapshot.error}');
@@ -98,9 +109,8 @@ class _MyAppState extends State<MyApp> {
               ),
             );
           }
-          
-          // 接続待ちかつ、初期データ（キャッシュ）もない場合のみローディング表示
-          if (snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData) {
+          // 初回は waiting または hasData が false のときローディング表示
+          if (snapshot.connectionState == ConnectionState.waiting || !snapshot.hasData) {
             return const Scaffold(body: Center(child: CircularProgressIndicator()));
           }
 

@@ -38,11 +38,11 @@ workflows:
       #    flutter test
       - name: Build iOS IPA
         script: |
-          flutter build ipa \
-            --release \
-            --build-name=1.4.0 \
-            --build-number=${BUILD_NUMBER} \
-            --dart-define=${DART_DEFINES} \
+          flutter build ipa
+            --release
+            --build-name=1.4.0
+            --build-number=${BUILD_NUMBER}
+            --dart-define=${DART_DEFINES}
       #      --export-options-plist=ios/exportOptions.plist
       - name: Upload dSYM to Firebase Crashlytics
         script: |

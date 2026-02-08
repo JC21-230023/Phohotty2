@@ -67,9 +67,10 @@ class StoragePhotoGetter {
     throw Exception('Network call failed after $maxRetries retries');
   }
 
-final String cUser=FbAuth.instance.currentUser?.uid ?? 'error_user';
+
 
 Future<List<StoragePhoto>?> getPhotosForCurrentUser() async {
+  final String cUser=FbAuth.instance.currentUser?.uid ?? 'error_user';
     return getPhotosForUser(cUser);
 }
   /// 指定されたユーザーのFirebaseStorageフォルダから画像一覧を取得
@@ -91,6 +92,10 @@ Future<List<StoragePhoto>?> getPhotosForCurrentUser() async {
 
       // 各画像のダウンロードURLを取得
       for (var item in listResult.items) {
+        if(item.name==".keep"){
+          print(".keep除外");
+          continue;
+        }
         try {
           final url = await _retryNetworkCall(
             () => item.getDownloadURL(),
@@ -114,7 +119,7 @@ Future<List<StoragePhoto>?> getPhotosForCurrentUser() async {
       rethrow;
     }
   }
-
+/*
   /// 特定のパスから画像を取得（より詳細な制御が必要な場合）
   /// [path]: FirebaseStorageのパス（例: 'users/userId/'）
   Future<List<StoragePhoto>?> getPhotosFromPath(String path) async {
@@ -154,9 +159,10 @@ Future<List<StoragePhoto>?> getPhotosForCurrentUser() async {
       debugPrint('FirebaseStorage読み込み失敗（パス: $path）: $e');
       rethrow;
     }
-  }
-
+  }*/
+/*
   /// 画像を削除（オプション機能）
+  /// 
   /// [userId]: ユーザーID
   /// [imageName]: 削除する画像のファイル名
   Future<bool> deletePhoto(String userId, String imageName) async {
@@ -169,5 +175,5 @@ Future<List<StoragePhoto>?> getPhotosForCurrentUser() async {
       debugPrint('画像削除失敗: $imageName, エラー: $e');
       return false;
     }
-  }
+  }*/
 }

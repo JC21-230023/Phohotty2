@@ -25,9 +25,15 @@ workflows:
     scripts:
       - name: Force Automatic Signing (Windows Fix)
         script: |
-          # Windowsからプッシュされた「手動署名」の設定を、ビルドマシン上で「自動」に強制変換
-          sed -i 's/ProvisioningStyle = Manual/ProvisioningStyle = Automatic/g' ios/Runner.xcodeproj/project.pbxproj
-          sed -i 's/CODE_SIGN_STYLE = Manual/CODE_SIGN_STYLE = Automatic/g' ios/Runner.xcodeproj/project.pbxproj
+          # ProvisioningStyle を Manual から Automatic に変換
+          sed 's/ProvisioningStyle = Manual/ProvisioningStyle = Automatic/g' ios/Runner.xcodeproj/project.pbxproj > project.pbxproj.tmp && mv project.pbxproj.tmp ios/Runner.xcodeproj/project.pbxproj
+          
+          # CODE_SIGN_STYLE を Manual から Automatic に変換
+          sed 's/CODE_SIGN_STYLE = Manual/CODE_SIGN_STYLE = Automatic/g' ios/Runner.xcodeproj/project.pbxproj > project.pbxproj.tmp && mv project.pbxproj.tmp ios/Runner.xcodeproj/project.pbxproj
+          
+          # 変換が正しく行われたか確認するためのログ（デバッグ用）
+          grep "ProvisioningStyle" ios/Runner.xcodeproj/project.pbxproj
+          grep "CODE_SIGN_STYLE" ios/Runner.xcodeproj/project.pbxproj
       - name: Set up GoogleService-Info.plist
         script: |
           echo "$GOOGLE_SERVICE_INFO_IOS" > ios/Runner/GoogleService-Info.plist

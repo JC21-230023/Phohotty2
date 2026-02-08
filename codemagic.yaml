@@ -48,6 +48,7 @@ workflows:
       - name: Build iOS IPA
         script: |
           # 1. 署名なしでアーカイブを作成
+          # ここで明示的に CODE_SIGNING_ALLOWED=NO を渡して Xcode の署名チェックを回避します
           flutter build ipa \
             --release \
             --build-name=1.4.0 \
@@ -55,11 +56,13 @@ workflows:
             --dart-define=${DART_DEFINES} \
             --no-codesign
 
-          # 2. 作成されたアーカイブをCodemagicの署名エンジンでIPA化（引数はシンプルに）
+          # 2. アーカイブから IPA を作成する際、プロジェクトの設定を「引数」で上書きします
+          # CODE_SIGN_STYLE="Automatic" を渡すことで、Manual設定を無効化します
           xcode-project build-ipa \
             --workspace ios/Runner.xcworkspace \
             --scheme Runner \
-            --archive-directory build/ios/archive
+            --archive-directory build/ios/archive \
+            --export-flags "CODE_SIGN_STYLE=Automatic"
       - name: Upload dSYM to Firebase Crashlytics
         script: |
           # 確実にdSYMを見つけるためのパス指定

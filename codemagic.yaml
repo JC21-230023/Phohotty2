@@ -36,7 +36,7 @@ workflows:
           fi
       - name: Set up code signing
         script: |
-          xcode-project use-profiles --reset
+          xcode-project use-profiles --bundle-id "jp.ac.jc21.Phohotty2"
       #- name: Tests
       #  script: |
       #    flutter test

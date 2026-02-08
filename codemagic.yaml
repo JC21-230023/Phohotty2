@@ -43,15 +43,16 @@ workflows:
 
       - name: Build iOS IPA (Fast Mode)
         script: |
-          # 署名なしアーカイブ作成（ビルド時間の節約）
+          # ${BUILD_NUMBER} に直接 100 を足す計算式を組み込みます
+          NEW_BUILD_NUMBER=$((BUILD_NUMBER + 100))
+          
           flutter build ipa \
             --release \
             --build-name=1.4.0 \
-            --build-number=${BUILD_NUMBER} \
+            --build-number=$NEW_BUILD_NUMBER \
             --dart-define=${DART_DEFINES} \
             --no-codesign
 
-          # 作成されたアーカイブを強制的にAutomatic SigningでIPA化
           xcode-project build-ipa \
             --workspace ios/Runner.xcworkspace \
             --scheme Runner \

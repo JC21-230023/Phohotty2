@@ -35,7 +35,11 @@ workflows:
           xcode-project use-profiles
       - name: Build iOS IPA
         script: |
-          # 1. 署名なしでアーカイブを作成（ここは既に成功しています）
+          # プロジェクトファイルを直接書き換え、手動署名設定を無効化する（Windowsユーザー向けの秘策）
+          sed -i '' 's/ProvisioningStyle = Manual;/ProvisioningStyle = Automatic;/g' ios/Runner.xcodeproj/project.pbxproj
+          sed -i '' 's/CODE_SIGN_STYLE = Manual;/CODE_SIGN_STYLE = Automatic;/g' ios/Runner.xcodeproj/project.pbxproj
+
+          # 1. 署名なしでビルド
           flutter build ipa \
             --release \
             --build-name=1.4.0 \
@@ -43,8 +47,7 @@ workflows:
             --dart-define=${DART_DEFINES} \
             --no-codesign
 
-          # 2. 生成されたアーカイブを元に、IPAを作成して署名する
-          # --archive-directory を使うことで、どこに成果物があるかを教えます
+          # 2. Codemagicの署名エンジンを走らせる
           xcode-project build-ipa \
             --workspace ios/Runner.xcworkspace \
             --scheme Runner \

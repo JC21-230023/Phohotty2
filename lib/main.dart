@@ -158,10 +158,37 @@ class _AuthGateState extends State<_AuthGate> {
           if (user == null) {
             return const AuthPage();
           }
-          return const MainTabPage();
+          // ログイン直後に MainTabPage を同じフレームで出すと iOS でクラッシュすることがあるため 1 フレーム遅延
+          return _DelayedMainTab();
         }
         return const Scaffold(body: Center(child: CircularProgressIndicator()));
       },
     );
+  }
+}
+
+/// 1 フレーム待ってから MainTabPage を表示（ログイン直後のネイティブ競合を避ける）
+class _DelayedMainTab extends StatefulWidget {
+  @override
+  State<_DelayedMainTab> createState() => _DelayedMainTabState();
+}
+
+class _DelayedMainTabState extends State<_DelayedMainTab> {
+  bool _show = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) setState(() => _show = true);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (!_show) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+    return const MainTabPage();
   }
 }

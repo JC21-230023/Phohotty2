@@ -22,8 +22,14 @@ class _MapPageState extends State<MapPage> {
   @override
   void initState() {
     super.initState();
-    _setCurrentLocation();
-    _loadPostMarkers();
+    // ログイン直後の画面遷移と重なると iOS でクラッシュすることがあるため、1フレーム遅延
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Future.delayed(const Duration(milliseconds: 400), () {
+        if (!mounted) return;
+        _setCurrentLocation();
+        _loadPostMarkers();
+      });
+    });
   }
   void _showImageSelectionBottomSheet({
       required String docId, required String title,
@@ -101,48 +107,60 @@ class _MapPageState extends State<MapPage> {
   }
 
   Future<void> _setCurrentLocation() async {
-    // 権限チェック
-    LocationPermission permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.denied) {
-      permission = await Geolocator.requestPermission();
-    }
+    try {
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+      }
 
-    if (permission == LocationPermission.denied ||
-        permission == LocationPermission.deniedForever) {
-      // 権限がない場合は東京を表示
+      if (permission == LocationPermission.denied ||
+          permission == LocationPermission.deniedForever) {
+        _setDefaultCamera();
+        return;
+      }
+
+      final position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+      );
+
+      if (!mounted) return;
       setState(() {
-        _initialCameraPosition = const CameraPosition(
-          target: LatLng(35.6762, 139.6503),
-          zoom: 12,
+        _initialCameraPosition = CameraPosition(
+          target: LatLng(position.latitude, position.longitude),
+          zoom: 15,
         );
       });
-      return;
+    } catch (e) {
+      debugPrint('MapPage _setCurrentLocation error: $e');
+      _setDefaultCamera();
     }
+  }
 
-    // 現在地取得
-    final position = await Geolocator.getCurrentPosition(
-      desiredAccuracy: LocationAccuracy.high,
-    );
-
+  void _setDefaultCamera() {
+    if (!mounted) return;
     setState(() {
-      _initialCameraPosition = CameraPosition(
-        target: LatLng(position.latitude, position.longitude),
-        zoom: 15,
+      _initialCameraPosition = const CameraPosition(
+        target: LatLng(35.6762, 139.6503),
+        zoom: 12,
       );
     });
   }
 
-  //==========追加=======
-    Set<Marker> postMarker() => _markers;
-    Future<void> _loadPostMarkers() async {
+  Set<Marker> postMarker() => _markers;
+
+  Future<void> _loadPostMarkers() async {
+    try {
       final Set<Marker> tmp = await getPostMarkers(_showImageSelectionBottomSheet);
-      //infoTapCallBackを作成して引数に
+      if (!mounted) return;
       setState(() {
         _markers
           ..clear()
           ..addAll(tmp);
       });
+    } catch (e) {
+      debugPrint('MapPage _loadPostMarkers error: $e');
     }
+  }
 
 //====================
   @override

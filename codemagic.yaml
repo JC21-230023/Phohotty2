@@ -13,11 +13,9 @@ workflows:
         APP_ENV: "prod"
         DART_DEFINES: "ENV=prod"
         ANDROID_FLAVOR: "prod"
-      # --- ここを最新にアップデート ---
       flutter: "3.38.9"   # エラーメッセージの推奨バージョンに合わせる
       xcode: "17.0"       # Flutter 3.38以降は最新のXcodeを推奨
       cocoapods: "1.16.2" # 最新のCocoaPods
-      # ----------------------------
     triggering:
       events:
         - tag
@@ -27,7 +25,7 @@ workflows:
     scripts:
       - name: Set up GoogleService-Info.plist
         script: |
-          echo "$GOOGLE_SERVICE_INFO_IOS" > ios/Runner/GoogleService-Info.plist
+          echo "$GOOGLE_SERVICE_INFO_IOS" > ios/Runner/GoogleService-Info.plist #firebaseから取得した内容を環境変数に設定しておく
       - name: Flutter deps
         script: |
           # プロジェクトのルートに移動してから実行
@@ -38,7 +36,7 @@ workflows:
           fi
       - name: Set up code signing
         script: |
-          xcode-project use-profiles
+          xcode-project use-profiles --reset
       #- name: Tests
       #  script: |
       #    flutter test

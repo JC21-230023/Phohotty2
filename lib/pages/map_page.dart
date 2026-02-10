@@ -58,7 +58,7 @@ class _MapPageState extends State<MapPage> {
 
               // 画像枠
               Container(
-                height: 220, // ← 画像の高さ（好みで調整）
+                height: 440, // ← 画像の高さ（好みで調整）
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(18),
                   border: Border.all(color: Colors.black26, width: 1),

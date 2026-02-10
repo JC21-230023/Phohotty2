@@ -65,16 +65,12 @@ class _TagSelectorState extends State<TagSelector> {
     // 親から初期配列が更新されるケース（例：AI解析完了後の差し替え）に対応
     if (oldWidget.initialSuggestedTags != widget.initialSuggestedTags) {
       _suggestedTags = List<String>.from(widget.initialSuggestedTags);
-      // 候補が差し替わったら選択も新候補に合わせる（AIタグ反映）
-      _selected = _suggestedTags.toSet();
-      _notifyChanged();
     }
     if (oldWidget.initialCustomTags != widget.initialCustomTags) {
       _customTags = List<String>.from(widget.initialCustomTags);
     }
     if (oldWidget.initialSelectedTags != widget.initialSelectedTags) {
       _selected = Set<String>.from(widget.initialSelectedTags);
-      _notifyChanged();
     }
   }
 

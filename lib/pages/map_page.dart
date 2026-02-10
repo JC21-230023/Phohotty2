@@ -22,8 +22,6 @@ class _MapPageState extends State<MapPage> {
   @override
   void initState() {
     super.initState();
-    // 先にデフォルトカメラをセットし、マップを表示してから位置取得（null のまま build されないようにする）
-    _setDefaultCamera();
     // ログイン直後の画面遷移と重なると iOS でクラッシュすることがあるため、1フレーム遅延
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Future.delayed(const Duration(milliseconds: 400), () {

@@ -115,9 +115,8 @@ class _TagLensPageState extends State<TagLensPage> {
           if (!mounted) return;
           setState(() {
             loading = false;
-            suggestedTags = labels;
+            suggestedTags = labels; // フォールバック：英語タグを使用
             _selectedTags = labels.toSet();
-            errorMessage = null;
           });
           return;
         }
@@ -127,7 +126,6 @@ class _TagLensPageState extends State<TagLensPage> {
           suggestedTags = jaTags ?? [];
           _selectedTags = (jaTags ?? []).toSet();
           loading = false;
-          errorMessage = null;
         });
       } catch (e) {
         debugPrint('Tag analysis error: $e');
@@ -248,7 +246,7 @@ class _TagLensPageState extends State<TagLensPage> {
           ? const Center(child: CircularProgressIndicator())
           : Padding(
               padding: const EdgeInsets.all(16),
-              child: ListView(
+              child: ListView(           // ← ここが親（children: を使える）
                  children: [
                     InkWell(
                       onTap: pickImage,
@@ -261,45 +259,19 @@ class _TagLensPageState extends State<TagLensPage> {
                         ),
                         child: currentImage == null
                             ? const Center(
-                                child: Text('クリックして画像を選択'),
+                                child: Text('クリックして画像を選択'),//v2：更新の確認
                               )
                             : Image.memory(currentImage, fit: BoxFit.cover),
                       ),
                     ),
-                    if (errorMessage != null) ...[
-                      const SizedBox(height: 12),
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: Colors.amber.shade50,
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: Colors.amber.shade200),
-                        ),
-                        child: Row(
-                          children: [
-                            Icon(Icons.info_outline, color: Colors.amber.shade800, size: 20),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                errorMessage!,
-                                style: TextStyle(color: Colors.amber.shade900, fontSize: 13),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                    ],
                     TagSelector(
-                      key: ValueKey('tags_${suggestedTags.length}_${suggestedTags.hashCode}'),
-                      initialSuggestedTags: suggestedTags,
-                      initialSelectedTags: _selectedTags,
+                      initialSuggestedTags:suggestedTags,//AIのタグ
                       onChanged: (tags) {
                         setState(() {
                           _selectedTags = tags;
                         });
                       },
-                    ),
+                    ), 
                     ElevatedButton.icon(
                       icon: const Icon(Icons.save),
                       label: const Text('保存'),

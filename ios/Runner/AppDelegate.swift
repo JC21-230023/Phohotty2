@@ -1,7 +1,8 @@
 import Flutter
 import UIKit
 import Firebase
-import GoogleSignIn // 追加
+import GoogleSignIn
+import GoogleMaps
 
 @main
 @objc class AppDelegate: FlutterAppDelegate {
@@ -12,6 +13,13 @@ import GoogleSignIn // 追加
     // Firebaseの設定
     if FirebaseApp.app() == nil {
       FirebaseApp.configure()
+    }
+
+    // Maps SDK for iOS（GoogleService-Info.plist の API_KEY を使用）
+    if let path = Bundle.main.path(forResource: "GoogleService-Info", ofType: "plist"),
+       let dict = NSDictionary(contentsOfFile: path) as? [String: Any],
+       let apiKey = dict["API_KEY"] as? String {
+      GMSServices.provideAPIKey(apiKey)
     }
 
     GeneratedPluginRegistrant.register(with: self)

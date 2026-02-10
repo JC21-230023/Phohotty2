@@ -18,7 +18,10 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
-    _requestPermissionAndLoad();
+    // ログイン直後の画面遷移と重なると iOS でクラッシュすることがあるため、1フレーム遅延
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Future.delayed(const Duration(milliseconds: 400), _requestPermissionAndLoad);
+    });
   }
 
   Future<void> _requestPermissionAndLoad() async {

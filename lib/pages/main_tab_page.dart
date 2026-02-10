@@ -15,16 +15,34 @@ class MainTabPage extends StatefulWidget {
 
 class _MainTabPageState extends State<MainTabPage> {
   int _selectedIndex = 0;
+  /// 一度表示したタブだけ保持（ログイン直後は先頭タブのみ構築してクラッシュを防ぐ）
+  final List<Widget?> _pageCache = [null, null, null, null, null];
 
-  static const List<Widget> _pages = [
-    HomePage(),
-    TagLensPage(),
-    MapPage(),
-    SnsPage(),
-    SettingsPage(),
-  ];
+  Widget _buildPage(int index) {
+    switch (index) {
+      case 0:
+        return const HomePage();
+      case 1:
+        return const TagLensPage();
+      case 2:
+        return const MapPage();
+      case 3:
+        return const SnsPage();
+      case 4:
+        return const SettingsPage();
+      default:
+        return const HomePage();
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _pageCache[0] = _buildPage(0);
+  }
 
   void _onItemTapped(int index) {
+    _pageCache[index] ??= _buildPage(index);
     setState(() {
       _selectedIndex = index;
     });
@@ -48,7 +66,7 @@ class _MainTabPageState extends State<MainTabPage> {
       ),
       body: IndexedStack(
         index: _selectedIndex,
-        children: _pages,
+        children: List.generate(5, (i) => _pageCache[i] ?? const SizedBox.shrink()),
       ),
       bottomNavigationBar: BottomNavigationBar(
         items: const <BottomNavigationBarItem>[

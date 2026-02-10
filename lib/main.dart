@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:photo_manager/photo_manager.dart';
@@ -21,8 +22,15 @@ Future<void> main() async {
   }
 
   try {
+    // ネットワーク不調で無限待ちにならないようタイムアウトを設定
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
+    ).timeout(
+      const Duration(seconds: 15),
+      onTimeout: () {
+        debugPrint('Firebase initialization timed out');
+        throw TimeoutException('Firebase init', Duration(seconds: 15));
+      },
     );
     
     // Crashlyticsのエラー転送設定
@@ -51,7 +59,11 @@ class _MyAppState extends State<MyApp> {
   @override
   void initState() {
     super.initState();
-    _requestPermissions();
+    // 起動直後はUI描画と権限ダイアログの競合でデッドロックすることがあるため、
+    // 初回フレーム描画後に少し遅延してから権限リクエストを行う
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Future.delayed(const Duration(milliseconds: 800), _requestPermissions);
+    });
   }
 
   Future<void> _requestPermissions() async {
@@ -78,39 +90,105 @@ class _MyAppState extends State<MyApp> {
 
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: StreamBuilder<FbUser?>(
-        stream: FbAuth.instance.authStateChanges,
-        // 解決策2: initialData を設定し、一瞬の null による「 AuthPage への飛ばされ」を防ぐ
-        initialData: FbAuth.instance.currentUser, 
-        builder: (context, snapshot) {
-          if (snapshot.hasError) {
-            debugPrint('Auth stream error in main: ${snapshot.error}');
-            return const Scaffold(
-              body: Center(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text('認証エラー'),
-                    SizedBox(height: 16),
-                    CircularProgressIndicator(),
-                  ],
-                ),
-              ),
-            );
-          }
-          
-          // 接続待ちかつ、初期データ（キャッシュ）もない場合のみローディング表示
-          if (snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData) {
-            return const Scaffold(body: Center(child: CircularProgressIndicator()));
-          }
+      home: _AuthGate(isFirebaseReady: widget.isFirebaseReady),
+    );
+  }
+}
 
-          final user = snapshot.data;
+/// 認証状態に応じて AuthPage / MainTabPage を表示。
+/// initialData で即時表示し、ストリームが遅れてもタイムアウトでログイン画面を表示する。
+class _AuthGate extends StatefulWidget {
+  final bool isFirebaseReady;
+
+  const _AuthGate({required this.isFirebaseReady});
+
+  @override
+  State<_AuthGate> createState() => _AuthGateState();
+}
+
+class _AuthGateState extends State<_AuthGate> {
+  bool _showLoginAfterTimeout = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // ストリームが emit されない場合に備え、一定時間でログイン画面を表示
+    Future.delayed(const Duration(seconds: 10), () {
+      if (mounted && !_showLoginAfterTimeout) {
+        setState(() => _showLoginAfterTimeout = true);
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (!widget.isFirebaseReady) {
+      return const Scaffold(
+        body: Center(
+          child: Text(
+            'Firebaseの初期化に失敗しました。\n設定ファイルやネットワークを確認してください。',
+          ),
+        ),
+      );
+    }
+
+    return StreamBuilder<FbUser?>(
+      stream: FbAuth.instance.authStateChanges,
+      initialData: FbAuth.instance.currentUser,
+      builder: (context, snapshot) {
+        if (snapshot.hasError) {
+          debugPrint('Auth stream error in main: ${snapshot.error}');
+          return const Scaffold(
+            body: Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text('認証エラー'),
+                  SizedBox(height: 16),
+                  CircularProgressIndicator(),
+                ],
+              ),
+            ),
+          );
+        }
+        // データがある、またはタイムアウト済みならログイン/メインを表示（読み込みで永久に止まらない）
+        final hasData = snapshot.hasData;
+        if (hasData || _showLoginAfterTimeout) {
+          final user = hasData ? snapshot.data : null;
           if (user == null) {
             return const AuthPage();
           }
-          return const MainTabPage();
-        },
-      ),
+          // ログイン直後に MainTabPage を同じフレームで出すと iOS でクラッシュすることがあるため 1 フレーム遅延
+          return _DelayedMainTab();
+        }
+        return const Scaffold(body: Center(child: CircularProgressIndicator()));
+      },
     );
+  }
+}
+
+/// 1 フレーム待ってから MainTabPage を表示（ログイン直後のネイティブ競合を避ける）
+class _DelayedMainTab extends StatefulWidget {
+  @override
+  State<_DelayedMainTab> createState() => _DelayedMainTabState();
+}
+
+class _DelayedMainTabState extends State<_DelayedMainTab> {
+  bool _show = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) setState(() => _show = true);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (!_show) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+    return const MainTabPage();
   }
 }
